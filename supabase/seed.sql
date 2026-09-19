@@ -1,0 +1,6 @@
+-- ==============================================================================
+-- seed.sql: Database Seed File (Clean Slate)
+-- ==============================================================================
+-- Seeded blogs and dummy data have been removed per configuration.
+-- You can add your own blog posts via the Admin CMS (/admin/blog)
+-- or write custom INSERT statements into public.blog_posts here when ready.
