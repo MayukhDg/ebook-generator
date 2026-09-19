@@ -2,11 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { PRICING_PLANS, CREDIT_PACKS } from '@/lib/stripe/config';
 import { store } from '@/lib/data/store';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { planId, packId, successUrl, cancelUrl } = body;
+
+    const supabase = createServerSupabaseClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    const userId = user?.id || '';
 
     const secretKey = process.env.STRIPE_SECRET_KEY;
     const isRealStripe = secretKey && !secretKey.includes('mock') && secretKey.startsWith('sk_');
@@ -66,7 +71,10 @@ export async function POST(req: NextRequest) {
         mode,
         success_url: fallbackSuccess,
         cancel_url: fallbackCancel,
+        client_reference_id: userId || undefined,
+        customer_email: user?.email || undefined,
         metadata: {
+          userId: userId || '',
           planId: planId || '',
           packId: packId || '',
         },

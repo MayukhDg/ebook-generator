@@ -28,28 +28,31 @@ export async function POST(req: NextRequest) {
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
+        const userId = session.client_reference_id || session.metadata?.userId;
         const planId = session.metadata?.planId;
         const packId = session.metadata?.packId;
 
-        if (planId) {
-          const plan = PRICING_PLANS.find((p) => p.id === planId);
-          if (plan) {
-            await store.addCredits(
-              '00000000-0000-0000-0000-000000000001',
-              plan.creditsPerMonth,
-              'subscription_grant',
-              { plan: plan.id, stripe_session_id: session.id }
-            );
-          }
-        } else if (packId) {
-          const pack = CREDIT_PACKS.find((p) => p.id === packId);
-          if (pack) {
-            await store.addCredits(
-              '00000000-0000-0000-0000-000000000001',
-              pack.credits,
-              'credit_purchase',
-              { pack: pack.id, stripe_session_id: session.id }
-            );
+        if (userId) {
+          if (planId) {
+            const plan = PRICING_PLANS.find((p) => p.id === planId);
+            if (plan) {
+              await store.addCredits(
+                userId,
+                plan.creditsPerMonth,
+                'subscription_grant',
+                { plan: plan.id, stripe_session_id: session.id }
+              );
+            }
+          } else if (packId) {
+            const pack = CREDIT_PACKS.find((p) => p.id === packId);
+            if (pack) {
+              await store.addCredits(
+                userId,
+                pack.credits,
+                'credit_purchase',
+                { pack: pack.id, stripe_session_id: session.id }
+              );
+            }
           }
         }
         break;
