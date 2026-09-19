@@ -23,6 +23,9 @@ export async function POST(req: NextRequest) {
     if (isRealStripe) {
       const stripe = new Stripe(secretKey, { apiVersion: '2024-09-30.acacia' as any });
 
+      const currency = (process.env.STRIPE_CURRENCY || 'inr').toLowerCase();
+      const multiplier = currency === 'inr' ? 85 : 1;
+
       let lineItems: any[] = [];
       let mode: Stripe.Checkout.SessionCreateParams.Mode = 'subscription';
 
@@ -33,12 +36,12 @@ export async function POST(req: NextRequest) {
         lineItems = [
           {
             price_data: {
-              currency: 'usd',
+              currency,
               product_data: {
                 name: `FolioCraft AI - ${plan.name}`,
                 description: `${plan.creditsPerMonth} Credits / Month with ${plan.tagline}`,
               },
-              unit_amount: plan.priceMonthly * 100,
+              unit_amount: Math.round(plan.priceMonthly * multiplier * 100),
               recurring: { interval: 'month' },
             },
             quantity: 1,
@@ -52,12 +55,12 @@ export async function POST(req: NextRequest) {
         lineItems = [
           {
             price_data: {
-              currency: 'usd',
+              currency,
               product_data: {
                 name: `FolioCraft AI - ${pack.name}`,
                 description: `${pack.credits} Instant Top-Up Credits`,
               },
-              unit_amount: pack.price * 100,
+              unit_amount: Math.round(pack.price * multiplier * 100),
             },
             quantity: 1,
           },
