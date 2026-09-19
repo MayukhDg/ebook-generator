@@ -9,7 +9,7 @@ import {
   GlobalContext,
   SourceMaterial
 } from '@/lib/types';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase/server';
 
 class ProductionDataStore {
   private isConfigured(): boolean {
@@ -107,18 +107,33 @@ class ProductionDataStore {
     metadata: Record<string, any> = {}
   ): Promise<{ success: boolean; newBalance: number }> {
     if (this.isConfigured()) {
-      const supabase = createServerSupabaseClient();
-      const profile = await this.getProfile(userId);
-      const current = profile?.credits_balance || 0;
+      const adminClient = createAdminSupabaseClient();
+      
+      const { data: profile } = await adminClient
+        .from('profiles')
+        .select('credits_balance')
+        .eq('id', userId)
+        .single();
+
+      const current = profile?.credits_balance ?? 20;
       const newBalance = current + amount;
 
-      await supabase.from('profiles').update({ credits_balance: newBalance }).eq('id', userId);
-      await supabase.from('credit_transactions').insert({
-        user_id: userId,
-        amount,
-        action_type: action,
-        metadata,
-      });
+      await adminClient
+        .from('profiles')
+        .update({ 
+          credits_balance: newBalance,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
+
+      await adminClient
+        .from('credit_transactions')
+        .insert({
+          user_id: userId,
+          amount,
+          action_type: action,
+          metadata,
+        });
 
       return { success: true, newBalance };
     }
