@@ -76,6 +76,7 @@ export async function POST(req: NextRequest) {
         cancel_url: fallbackCancel,
         client_reference_id: userId || undefined,
         customer_email: user?.email || undefined,
+        billing_address_collection: 'required',
         metadata: {
           userId: userId || '',
           planId: planId || '',
