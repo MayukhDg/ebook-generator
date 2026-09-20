@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/lib/data/store';
+import { createAdminSupabaseClient } from '@/lib/supabase/server';
 import OpenAI from 'openai';
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { bookId, themePrompt, stylePreset } = body;
+    const { bookId, themePrompt, stylePreset, customPrompt } = body;
 
     if (!bookId) {
       return NextResponse.json({ error: 'Book ID is required' }, { status: 400 });
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
       book.user_id,
       4,
       'cover_generation',
-      { bookId, themePrompt, stylePreset }
+      { bookId, themePrompt, stylePreset, customPrompt }
     );
 
     if (!deduction.success) {
@@ -35,20 +36,26 @@ export async function POST(req: NextRequest) {
     const baseNegativeSpacePrompt = `Professional book cover background texture and art, minimalist editorial composition, STRICTLY NO TEXT, NO TYPOGRAPHY, NO LETTERS, NO NUMBERS, NO TITLE, NO WORDS. Generous negative space at the upper third and lower third specifically engineered for vector typographic overlay. High-end modern publishing aesthetic matching a prestige non-fiction hardcover.`;
 
     let styleDescriptor = '';
-    switch (stylePreset) {
-      case 'minimal_authority':
-        styleDescriptor = 'Subtle dark graphite paper texture with minimalist gold leaf geometric lines, sleek matte finish.';
-        break;
-      case 'blueprint_sketch':
-        styleDescriptor = 'Architectural dark blueprint grid texture, deep Prussian blue, faint chalk isometric vectors.';
-        break;
-      case 'abstract_geometry':
-        styleDescriptor = 'Monochrome obsidian geometric facets, dramatic chiaroscuro studio lighting, subtle cyan edge glow.';
-        break;
-      case 'dark_editorial':
-      default:
-        styleDescriptor = 'Deep charcoal slate background with organic fluid metallic smoke, elegant fine-art non-fiction cover art.';
-        break;
+
+    // If user provided a custom prompt, use it as the primary aesthetic directive
+    if (customPrompt && customPrompt.trim()) {
+      styleDescriptor = customPrompt.trim();
+    } else {
+      switch (stylePreset) {
+        case 'minimal_authority':
+          styleDescriptor = 'Subtle dark graphite paper texture with minimalist gold leaf geometric lines, sleek matte finish.';
+          break;
+        case 'blueprint_sketch':
+          styleDescriptor = 'Architectural dark blueprint grid texture, deep Prussian blue, faint chalk isometric vectors.';
+          break;
+        case 'abstract_geometry':
+          styleDescriptor = 'Monochrome obsidian geometric facets, dramatic chiaroscuro studio lighting, subtle cyan edge glow.';
+          break;
+        case 'dark_editorial':
+        default:
+          styleDescriptor = 'Deep charcoal slate background with organic fluid metallic smoke, elegant fine-art non-fiction cover art.';
+          break;
+      }
     }
 
     const fullDallePrompt = `${baseNegativeSpacePrompt} Subject and aesthetic: ${themePrompt || book.title}. Style: ${styleDescriptor}`;
@@ -61,22 +68,46 @@ export async function POST(req: NextRequest) {
       try {
         const openai = new OpenAI({ apiKey });
         const response = await openai.images.generate({
-          model: 'dall-e-3',
+          model: 'gpt-image-1-mini',
           prompt: fullDallePrompt,
           n: 1,
-          size: '1024x1792', // Portrait orientation for 6x9 trade paperback
-          quality: 'hd',
-          style: 'vivid',
+          size: '1024x1536',
         });
 
+        const b64 = response.data?.[0]?.b64_json;
         const ephemeralUrl = response.data?.[0]?.url;
-        if (ephemeralUrl) {
-          // In production with real Supabase Storage:
-          // Fetch image buffer and pipe to Supabase bucket 'book-covers/{userId}/{bookId}-bg.png'
+
+        if (b64) {
+          try {
+            const adminSupabase = createAdminSupabaseClient();
+            const buffer = Buffer.from(b64, 'base64');
+            const filePath = `${book.user_id}/${bookId}-cover-${Date.now()}.png`;
+
+            const { error: uploadErr } = await adminSupabase.storage
+              .from('book-covers')
+              .upload(filePath, buffer, {
+                contentType: 'image/png',
+                upsert: true,
+              });
+
+            if (!uploadErr) {
+              const { data: { publicUrl } } = adminSupabase.storage
+                .from('book-covers')
+                .getPublicUrl(filePath);
+              imageUrl = publicUrl;
+            } else {
+              imageUrl = `data:image/png;base64,${b64}`;
+            }
+          } catch {
+            imageUrl = `data:image/png;base64,${b64}`;
+          }
+        } else if (ephemeralUrl) {
           imageUrl = ephemeralUrl;
+        } else {
+          imageUrl = getCuratedBackground(stylePreset);
         }
       } catch (dalleErr: any) {
-        console.warn('DALL-E 3 generation failed, using curated editorial background:', dalleErr);
+        console.warn('AI cover generation failed, using curated editorial background:', dalleErr);
         imageUrl = getCuratedBackground(stylePreset);
       }
     } else {

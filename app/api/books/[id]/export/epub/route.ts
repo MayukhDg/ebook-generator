@@ -72,10 +72,69 @@ p {
 }`
     );
 
-    // 4. Title Page XHTML
-    oebps?.file(
-      'titlepage.xhtml',
-      `<?xml version="1.0" encoding="utf-8"?>
+    // Fetch cover image if available
+    let coverBuffer: Buffer | null = null;
+    let coverMediaType = 'image/jpeg';
+    const coverUrl = book.cover_bg_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80';
+
+    if (coverUrl) {
+      try {
+        if (coverUrl.startsWith('data:')) {
+          const match = coverUrl.match(/^data:([^;]+);base64,(.+)$/);
+          if (match) {
+            coverMediaType = match[1];
+            coverBuffer = Buffer.from(match[2], 'base64');
+          }
+        } else {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 6000);
+          const imgRes = await fetch(coverUrl, {
+            signal: controller.signal,
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+          });
+          clearTimeout(timeoutId);
+          if (imgRes.ok) {
+            const arr = await imgRes.arrayBuffer();
+            coverBuffer = Buffer.from(arr);
+            coverMediaType = imgRes.headers.get('content-type') || 'image/jpeg';
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch cover image for EPUB:', err);
+      }
+    }
+
+    if (coverBuffer) {
+      const coverExt = coverMediaType.includes('png') ? 'png' : 'jpg';
+      const coverFilename = `cover.${coverExt}`;
+      oebps?.file(coverFilename, coverBuffer);
+
+      oebps?.file(
+        'cover.xhtml',
+        `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Cover</title>
+  <style type="text/css">
+    body { margin: 0; padding: 0; text-align: center; background-color: #0a0f1d; }
+    img { max-width: 100%; height: auto; margin: 0 auto; display: block; }
+  </style>
+</head>
+<body>
+  <div style="text-align: center; page-break-after: always;">
+    <img src="${coverFilename}" alt="Cover" />
+  </div>
+</body>
+</html>`
+      );
+    }
+
+    // 4. Title Page XHTML (Only when no cover image is provided)
+    if (!coverBuffer) {
+      oebps?.file(
+        'titlepage.xhtml',
+        `<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -90,7 +149,8 @@ p {
   </div>
 </body>
 </html>`
-    );
+      );
+    }
 
     // 5. Chapters XHTML
     const chapterManifestItems: string[] = [];
@@ -137,6 +197,9 @@ p {
     });
 
     // 6. content.opf
+    const coverExt = coverMediaType.includes('png') ? 'png' : 'jpg';
+    const coverFilename = `cover.${coverExt}`;
+
     const contentOpf = `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookID" version="3.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/">
@@ -146,14 +209,18 @@ p {
     <dc:language>en</dc:language>
     <dc:description>${escapeXml(book.core_thesis)}</dc:description>
     <meta property="dcterms:modified">${new Date().toISOString().replace(/\.\d+Z$/, 'Z')}</meta>
+    ${coverBuffer ? `<meta name="cover" content="cover-image"/>` : ''}
   </metadata>
   <manifest>
     <item id="css" href="styles.css" media-type="text/css"/>
-    <item id="titlepage" href="titlepage.xhtml" media-type="application/xhtml+xml"/>
+    ${coverBuffer ? `<item id="cover" href="cover.xhtml" media-type="application/xhtml+xml"/>` : ''}
+    ${coverBuffer ? `<item id="cover-image" href="${coverFilename}" media-type="${coverMediaType}" properties="cover-image"/>` : ''}
+    ${!coverBuffer ? `<item id="titlepage" href="titlepage.xhtml" media-type="application/xhtml+xml"/>` : ''}
     ${chapterManifestItems.join('\n    ')}
   </manifest>
   <spine>
-    <itemref idref="titlepage"/>
+    ${coverBuffer ? `<itemref idref="cover"/>` : ''}
+    ${!coverBuffer ? `<itemref idref="titlepage"/>` : ''}
     ${chapterSpineItems.join('\n    ')}
   </spine>
 </package>`;

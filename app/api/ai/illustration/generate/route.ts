@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/lib/data/store';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase/server';
 import OpenAI from 'openai';
 
 export async function POST(req: NextRequest) {
@@ -46,13 +46,44 @@ export async function POST(req: NextRequest) {
       try {
         const openai = new OpenAI({ apiKey });
         const response = await openai.images.generate({
-          model: 'dall-e-3',
+          model: 'gpt-image-1-mini',
           prompt: illustrationPrompt,
           n: 1,
           size: '1024x1024',
-          quality: 'standard',
         });
-        imageUrl = response.data?.[0]?.url || getFallbackIllustration();
+
+        const b64 = response.data?.[0]?.b64_json;
+        const ephemeralUrl = response.data?.[0]?.url;
+
+        if (b64) {
+          try {
+            const adminSupabase = createAdminSupabaseClient();
+            const buffer = Buffer.from(b64, 'base64');
+            const filePath = `${userId}/${chapterId}-ill-${Date.now()}.png`;
+
+            const { error: uploadErr } = await adminSupabase.storage
+              .from('chapter-illustrations')
+              .upload(filePath, buffer, {
+                contentType: 'image/png',
+                upsert: true,
+              });
+
+            if (!uploadErr) {
+              const { data: { publicUrl } } = adminSupabase.storage
+                .from('chapter-illustrations')
+                .getPublicUrl(filePath);
+              imageUrl = publicUrl;
+            } else {
+              imageUrl = `data:image/png;base64,${b64}`;
+            }
+          } catch {
+            imageUrl = `data:image/png;base64,${b64}`;
+          }
+        } else if (ephemeralUrl) {
+          imageUrl = ephemeralUrl;
+        } else {
+          imageUrl = getFallbackIllustration();
+        }
       } catch (err: any) {
         console.warn('Illustration generation failed, using fallback:', err);
         imageUrl = getFallbackIllustration();

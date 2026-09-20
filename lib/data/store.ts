@@ -172,11 +172,21 @@ class ProductionDataStore {
   async getBookById(id: string): Promise<Book | null> {
     if (this.isConfigured()) {
       const supabase = createServerSupabaseClient();
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('books')
         .select('*')
         .eq('id', id)
         .single();
+
+      if (!data && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const admin = createAdminSupabaseClient();
+        const adminRes = await admin
+          .from('books')
+          .select('*')
+          .eq('id', id)
+          .single();
+        data = adminRes.data;
+      }
 
       if (data) return data as Book;
       return null;
@@ -188,11 +198,21 @@ class ProductionDataStore {
   async getBookBySlug(slug: string): Promise<Book | null> {
     if (this.isConfigured()) {
       const supabase = createServerSupabaseClient();
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('books')
         .select('*')
         .eq('share_slug', slug)
         .single();
+
+      if (!data && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const admin = createAdminSupabaseClient();
+        const adminRes = await admin
+          .from('books')
+          .select('*')
+          .eq('share_slug', slug)
+          .single();
+        data = adminRes.data;
+      }
 
       if (data) return data as Book;
       return null;
@@ -258,13 +278,27 @@ class ProductionDataStore {
   async updateBook(id: string, updates: Partial<Book>): Promise<Book | null> {
     if (this.isConfigured()) {
       const supabase = createServerSupabaseClient();
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('books')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id)
         .select()
         .single();
 
+      if (!data && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const admin = createAdminSupabaseClient();
+        const adminRes = await admin
+          .from('books')
+          .update({ ...updates, updated_at: new Date().toISOString() })
+          .eq('id', id)
+          .select()
+          .single();
+        data = adminRes.data;
+      }
+
+      if (error) {
+        console.error('Error updating book in store:', error);
+      }
       if (data) return data as Book;
       return null;
     }
@@ -285,11 +319,21 @@ class ProductionDataStore {
   async getChapters(bookId: string): Promise<Chapter[]> {
     if (this.isConfigured()) {
       const supabase = createServerSupabaseClient();
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('chapters')
         .select('*')
         .eq('book_id', bookId)
         .order('chapter_number', { ascending: true });
+
+      if ((!data || data.length === 0) && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const admin = createAdminSupabaseClient();
+        const adminRes = await admin
+          .from('chapters')
+          .select('*')
+          .eq('book_id', bookId)
+          .order('chapter_number', { ascending: true });
+        data = adminRes.data;
+      }
 
       if (data) return data as Chapter[];
       return [];
