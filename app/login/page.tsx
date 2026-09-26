@@ -156,11 +156,6 @@ export default function LoginPage() {
           <LoginForm />
         </Suspense>
 
-        {/* Security badge footer */}
-        <div className="mt-6 text-center text-xs text-slate-400 flex items-center justify-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-          <span>Secured with Supabase Row Level Security (RLS)</span>
-        </div>
       </div>
     </div>
   );

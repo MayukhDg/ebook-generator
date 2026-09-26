@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { BookOpen, ShieldCheck, Sparkles, Printer, FileCheck } from 'lucide-react';
+import { BookOpen, ShieldCheck, Printer, FileCheck } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -38,15 +38,69 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Product & Studio */}
+          {/* Platform */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">Platform</h4>
+            <ul className="space-y-2 text-xs">
+              <li>
+                <Link href="/dashboard" className="text-gray-500 hover:text-orange-600 transition-colors">
+                  Studio Workspace
+                </Link>
+              </li>
+              <li>
+                <Link href="/#how-it-works" className="text-gray-500 hover:text-orange-600 transition-colors">
+                  Voice Ingestion
+                </Link>
+              </li>
+              <li>
+                <Link href="/#features" className="text-gray-500 hover:text-orange-600 transition-colors">
+                  Anti-Slop Engine
+                </Link>
+              </li>
+              <li>
+                <Link href="/#pricing" className="text-gray-500 hover:text-orange-600 transition-colors">
+                  Credit Pricing
+                </Link>
+              </li>
+            </ul>
+          </div>
 
-          <div className="mt-10 flex flex-col items-center justify-between border-t border-gray-100 pt-6 text-xs text-gray-400 sm:flex-row">
-            <p>© {new Date().getFullYear()} FolioCraft AI. All rights reserved. Built for published authors.</p>
-            <p className="mt-2 sm:mt-0">
-              Amazon, Kindle, and KDP are registered trademarks of Amazon.com, Inc. FolioCraft AI is independent.
-            </p>
+          {/* Resources & Account */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-gray-900">Resources</h4>
+            <ul className="space-y-2 text-xs">
+              <li>
+                <Link href="/blog" className="text-gray-500 hover:text-orange-600 transition-colors">
+                  Authority Blog
+                </Link>
+              </li>
+              <li>
+                <Link href="/#faq" className="text-gray-500 hover:text-orange-600 transition-colors">
+                  Frequently Asked Questions
+                </Link>
+              </li>
+              <li>
+                <Link href="/login" className="text-gray-500 hover:text-orange-600 transition-colors">
+                  Sign In
+                </Link>
+              </li>
+              <li>
+                <Link href="/signup" className="text-orange-600 font-medium hover:text-orange-500 transition-colors">
+                  Start Free (20 Credits)
+                </Link>
+              </li>
+            </ul>
           </div>
         </div>
+
+        {/* Bottom Legal & Trademark Bar */}
+        <div className="mt-12 flex flex-col items-center justify-between border-t border-gray-100 pt-6 text-xs text-gray-400 sm:flex-row">
+          <p>© {new Date().getFullYear()} FolioCraft AI. All rights reserved. Built for published authors.</p>
+          <p className="mt-2 sm:mt-0">
+            Amazon, Kindle, and KDP are registered trademarks of Amazon.com, Inc. FolioCraft AI is independent.
+          </p>
+        </div>
+      </div>
     </footer>
   );
 }

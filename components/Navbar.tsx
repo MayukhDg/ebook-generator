@@ -3,18 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { 
-  BookOpen, 
-  Sparkles, 
-  Coins, 
-  Layers, 
-  FileText, 
-  ShieldCheck, 
-  User, 
-  LogOut, 
-  LogIn, 
-  Menu, 
-  X 
+import {
+  BookOpen,
+  Sparkles,
+  Coins,
+  Layers,
+  FileText,
+  ShieldCheck,
+  User,
+  LogOut,
+  LogIn,
+  Menu,
+  X
 } from 'lucide-react';
 import { CREDIT_RATES } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
@@ -52,7 +52,7 @@ export default function Navbar() {
           setCredits(data.credits_balance);
         }
       })
-      .catch(() => {});
+      .catch(() => { });
 
     // Check admin cookie client-side
     const hasAdminCookie = document.cookie.includes('foliocraft_admin_token');
@@ -73,7 +73,7 @@ export default function Navbar() {
 
   const navLinks = [
     { label: 'Studio', href: '/dashboard', icon: Layers, requireAuth: true, requireAdmin: false },
-    { label: 'Blog & AEO', href: '/blog', icon: FileText, requireAuth: false, requireAdmin: false },
+    { label: 'Blogs', href: '/blog', icon: FileText, requireAuth: false, requireAdmin: false },
     { label: 'Admin CMS', href: '/admin/blog', icon: ShieldCheck, requireAuth: true, requireAdmin: true },
   ];
 
@@ -113,11 +113,10 @@ export default function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${
-                      isActive
+                    className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${isActive
                         ? 'bg-orange-50 text-orange-600 border border-orange-200/60 shadow-sm'
                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+                      }`}
                   >
                     <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-orange-500' : 'text-gray-400'}`} />
                     {link.label}
