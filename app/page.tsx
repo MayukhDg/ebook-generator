@@ -146,7 +146,7 @@ export default function HomePage() {
       </section>
 
       {/* 2. INTERACTIVE "WHY NOT JUST CHATGPT?" COMPARISON MATRIX */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-100 bg-white/40">
+      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-100 bg-white/40">
         <div className="mx-auto max-w-5xl space-y-12">
           <div className="text-center space-y-3">
             <span className="text-xs font-bold uppercase tracking-widest text-orange-500">
@@ -255,7 +255,7 @@ export default function HomePage() {
       </section>
 
       {/* 3. INTERACTIVE 3-STEP DEMONSTRATION */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-warm">
+      <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-warm">
         <div className="mx-auto max-w-5xl space-y-12">
           <div className="text-center space-y-3">
             <span className="text-xs font-bold uppercase tracking-widest text-orange-500">
@@ -470,7 +470,7 @@ export default function HomePage() {
       </section>
 
       {/* 5. INTERACTIVE FAQ ACCORDION */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-100 bg-gradient-warm">
+      <section id="faq" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-100 bg-gradient-warm">
         <div className="mx-auto max-w-3xl space-y-8">
           <div className="text-center space-y-3">
             <span className="text-xs font-bold uppercase tracking-widest text-orange-500">
