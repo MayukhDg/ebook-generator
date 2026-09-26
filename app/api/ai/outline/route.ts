@@ -1,12 +1,34 @@
+export const maxDuration = 60;
+
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/lib/data/store';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { generateChapterManuscript } from '@/lib/ai/manuscript';
 import OpenAI from 'openai';
+
+async function batchProcess<T, R>(items: T[], batchSize: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = [];
+  for (let i = 0; i < items.length; i += batchSize) {
+    const chunk = items.slice(i, i + batchSize);
+    const chunkResults = await Promise.all(chunk.map(fn));
+    results.push(...chunkResults);
+  }
+  return results;
+}
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { bookId, title, subtitle, targetAudience, coreThesis, toneVoice, sourceMaterials } = body;
+    const { 
+      bookId, 
+      title, 
+      subtitle, 
+      targetAudience, 
+      coreThesis, 
+      toneVoice, 
+      sourceMaterials,
+      chapterCount: rawChapterCount
+    } = body;
 
     if (!title || !coreThesis || !targetAudience) {
       return NextResponse.json(
@@ -15,21 +37,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Default to 10 chapters if not specified, bounded between 1 and 50
+    const targetChapterCount = Math.max(1, Math.min(50, parseInt(rawChapterCount || '10', 10) || 10));
+
     const supabase = createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id || '00000000-0000-0000-0000-000000000001';
 
-    // 1. Atomic Credit Deduction (3 Credits)
+    // 1. Credit Deduction: 3 credits for Blueprint + 1 credit per chapter generated
+    const totalCost = 3 + targetChapterCount * 1;
     const deduction = await store.deductCredits(
       userId,
-      3,
+      totalCost,
       'blueprint_generation',
-      { bookId, title }
+      { 
+        bookId, 
+        title, 
+        targetChapterCount, 
+        baseBlueprintCost: 3, 
+        perChapterCost: 1, 
+        totalCost 
+      }
     );
 
     if (!deduction.success) {
       return NextResponse.json(
-        { error: deduction.error || 'Insufficient credits for blueprint generation' },
+        { error: deduction.error || `Insufficient credits (${totalCost} required for blueprint + ${targetChapterCount} chapters)` },
         { status: 402 }
       );
     }
@@ -45,24 +78,32 @@ export async function POST(req: NextRequest) {
 
     if (isRealKey) {
       try {
-        const openai = new OpenAI({ apiKey });
+        const openai = new OpenAI({ apiKey, timeout: 25000 });
         const response = await openai.chat.completions.create({
           model: 'gpt-4o',
           response_format: { type: 'json_object' },
           messages: [
             {
               role: 'system',
-              content: `You are an elite ghostwriter and publishing strategist for bestselling non-fiction and business books (Penguin Random House, Harvard Business Review Press).
-Your goal is to build an authoritative, chapter-by-chapter book blueprint designed for Amazon KDP success.
-Structure the book into 8-10 high-impact chapters with compelling non-fiction titles, summaries, and coined proprietary terminology.
+              content: `You are an elite ghostwriter, biographer, and publishing strategist across all genres (biography, memoir, history, politics, business, technology, self-help, philosophy, and creative non-fiction).
+Your goal is to build an authoritative, engaging, and deeply coherent chapter-by-chapter book blueprint designed for publication success.
+Analyze the user's title, subtitle, target audience, and core thesis carefully.
+Structure the book into EXACTLY ${targetChapterCount} high-impact, sequential chapters tailored precisely to the subject matter.
+
+CRITICAL RULES:
+- The chapters must be 100% relevant and coherent to the requested topic.
+- If the book is a biography, political history, or personal journey (e.g., about Donald Trump), structure the chapters chronologically and thematically around real events, life stages, conflicts, and milestones as requested in the core thesis.
+- NEVER force corporate consulting jargon, billing frameworks, or client deliverable models unless the book is explicitly about consulting.
+- The 'terminology' field should contain 3-5 pivotal concepts, themes, key terms, or recurring motifs specific to this book topic and their meaningful definitions in this context.
+
 Respond ONLY with a JSON object matching this schema:
 {
   "chapters": [
     {"chapter_number": 1, "title": "...", "summary": "..."}
   ],
   "terminology": {
-    "Term 1": "Definition...",
-    "Term 2": "Definition..."
+    "Key Concept / Theme 1": "Definition and significance in the context of this book...",
+    "Key Concept / Theme 2": "Definition..."
   },
   "rolling_abstracts": [
     "Abstract of Chapter 1 arc...",
@@ -75,8 +116,9 @@ Respond ONLY with a JSON object matching this schema:
               content: `Title: ${title}
 Subtitle: ${subtitle || 'None'}
 Target Audience: ${targetAudience}
-Core Thesis: ${coreThesis}
+Core Thesis / Narrative Arc: ${coreThesis}
 Tone & Voice: ${toneVoice || 'Authoritative & Practical'}
+Exact Number of Chapters Required: ${targetChapterCount}
 Source Materials Count: ${Array.isArray(sourceMaterials) ? sourceMaterials.length : 0}`,
             },
           ],
@@ -84,12 +126,17 @@ Source Materials Count: ${Array.isArray(sourceMaterials) ? sourceMaterials.lengt
 
         const content = response.choices[0].message.content;
         generatedOutline = JSON.parse(content || '{}');
+
+        // Verify chapters length
+        if (!generatedOutline.chapters || generatedOutline.chapters.length < 1) {
+          generatedOutline = generateDeterministicOutline(title, targetAudience, coreThesis, targetChapterCount);
+        }
       } catch (aiErr) {
         console.warn('OpenAI API call failed, falling back to deterministic authority compiler:', aiErr);
-        generatedOutline = generateDeterministicOutline(title, targetAudience, coreThesis);
+        generatedOutline = generateDeterministicOutline(title, targetAudience, coreThesis, targetChapterCount);
       }
     } else {
-      generatedOutline = generateDeterministicOutline(title, targetAudience, coreThesis);
+      generatedOutline = generateDeterministicOutline(title, targetAudience, coreThesis, targetChapterCount);
     }
 
     // 2. Persist Global Context and Chapters in Store/DB
@@ -110,17 +157,43 @@ Source Materials Count: ${Array.isArray(sourceMaterials) ? sourceMaterials.lengt
         global_context: globalContext,
       });
 
-      // Clear pending chapters and insert newly generated outline
+      // Clear pending chapters and insert newly generated outline WITH full initial manuscripts!
+      // Process manuscripts in parallel chunks of 5 for optimal speed and reliability
+      const chapterDataList = await batchProcess(
+        generatedOutline.chapters,
+        5,
+        async (ch) => {
+          const contentMarkdown = await generateChapterManuscript({
+            chapterNumber: ch.chapter_number,
+            chapterTitle: ch.title,
+            chapterSummary: ch.summary,
+            bookTitle: title,
+            subtitle: subtitle || null,
+            targetAudience,
+            coreThesis,
+            toneVoice,
+            terminology: generatedOutline.terminology,
+          });
+
+          const words = contentMarkdown.trim().split(/\s+/).length;
+          return {
+            ch,
+            contentMarkdown,
+            words,
+          };
+        }
+      );
+
       const createdChapters = [];
-      for (const ch of generatedOutline.chapters) {
+      for (const item of chapterDataList) {
         const chapter = await store.createChapter({
           book_id: bookId,
-          chapter_number: ch.chapter_number,
-          title: ch.title,
-          summary: ch.summary,
-          status: 'pending',
-          word_count: 0,
-          content_markdown: '',
+          chapter_number: item.ch.chapter_number,
+          title: item.ch.title,
+          summary: item.ch.summary,
+          status: 'completed',
+          word_count: item.words,
+          content_markdown: item.contentMarkdown,
         });
         createdChapters.push(chapter);
       }
@@ -128,6 +201,8 @@ Source Materials Count: ${Array.isArray(sourceMaterials) ? sourceMaterials.lengt
       return NextResponse.json({
         success: true,
         remainingCredits: deduction.remainingCredits,
+        totalCost,
+        targetChapterCount,
         globalContext,
         chapters: createdChapters,
       });
@@ -136,6 +211,8 @@ Source Materials Count: ${Array.isArray(sourceMaterials) ? sourceMaterials.lengt
     return NextResponse.json({
       success: true,
       remainingCredits: deduction.remainingCredits,
+      totalCost,
+      targetChapterCount,
       globalContext,
       chapters: generatedOutline.chapters,
     });
@@ -145,59 +222,145 @@ Source Materials Count: ${Array.isArray(sourceMaterials) ? sourceMaterials.lengt
   }
 }
 
-function generateDeterministicOutline(title: string, audience: string, thesis: string) {
+function generateDeterministicOutline(
+  title: string, 
+  audience: string, 
+  thesis: string, 
+  count: number = 10
+): {
+  chapters: Array<{ chapter_number: number; title: string; summary: string }>;
+  terminology: Record<string, string>;
+  rolling_abstracts: string[];
+} {
+  const combined = `${title} ${thesis} ${audience}`.toLowerCase();
+  const isBiography = /trump|president|biograph|memoir|life|polit|history|leader|career/i.test(combined);
+
+  if (isBiography) {
+    const bioThemes = [
+      {
+        title: `Origins and Foundations: The Early Years`,
+        summary: `Traces the early influences, familial heritage, and formative experiences that established the core drive for ${title}.`,
+      },
+      {
+        title: `Forging the Identity: Stepping into the Arena`,
+        summary: `Explores early ventures, aggressive maneuvers, and the development of a distinct public persona.`,
+      },
+      {
+        title: `Ascending the Cultural Stage: Media, Celebrity, and Reach`,
+        summary: `How television, brand licensing, and relentless public relations transformed a private figure into a household name.`,
+      },
+      {
+        title: `The Political Incursion: Defying the Establishment`,
+        summary: `The unexpected entry into national politics, examining campaign strategy, grassroots resonance, and institutional shock.`,
+      },
+      {
+        title: `Governing in the Crosshairs: The Presidential Term`,
+        summary: `A forensic review of key executive actions, policy battles, foreign negotiations, and the polarization of power.`,
+      },
+      {
+        title: `The Storm of 2020: Contested Elections and Defeat`,
+        summary: `The dramatic climax of the election, the aftermath of defeat, and the initial fallout for supporters and critics alike.`,
+      },
+      {
+        title: `The Crucible of Persecution: Legal Battles and Indictments`,
+        summary: `Examining the unprecedented legal onslaught, criminal trials, and the political narrative of institutional warfare.`,
+      },
+      {
+        title: `The Resilience Doctrine: Refusing to Concede`,
+        summary: `How adversity was reframed as a rallying cry, solidifying loyalty among followers and redefining the political landscape.`,
+      },
+      {
+        title: `The Counter-Attack: Orchestrating the Return`,
+        summary: `The strategic campaign for resurgence, coalition rebuilding, and navigating unprecedented headwinds back to the summit.`,
+      },
+      {
+        title: `The Sovereign Legacy: Historical Reckoning and the Future`,
+        summary: `Synthesizing the enduring impact on governance, global diplomacy, media dynamics, and future generations.`,
+      },
+    ];
+
+    const chapters = [];
+    for (let i = 1; i <= count; i++) {
+      const theme = bioThemes[(i - 1) % bioThemes.length];
+      chapters.push({
+        chapter_number: i,
+        title: i <= bioThemes.length ? theme.title : `Chapter ${i}: The Ongoing Influence and Historical Reckoning`,
+        summary: theme.summary,
+      });
+    }
+
+    return {
+      chapters,
+      terminology: {
+        'Narrative Primacy': 'The ability to dominate public attention and shape the news cycle regardless of external resistance.',
+        'Institutional Friction': 'The fierce clash between disruptive political leadership and established governing norms.',
+        'Resilience Dynamic': 'Reframing legal and political attacks into mobilizing fuel for the broader movement.',
+      },
+      rolling_abstracts: [
+        'Chapter 1 examines early upbringing and foundational character traits.',
+        'Chapter 2 traces the rise through high-stakes arenas and public notoriety.',
+        'Chapter 3 explores the dramatic ascent to national and global leadership.',
+      ],
+    };
+  }
+
+  // General non-fiction fallback
+  const generalThemes = [
+    {
+      title: `The Foundational Landscape: Understanding the Realities of ${title}`,
+      summary: `Examines the background and core challenges affecting ${audience} while establishing the key premise of ${thesis}.`,
+    },
+    {
+      title: `Core Principles: Deconstructing What Really Works`,
+      summary: `Breaks down the fundamental insights required to navigate this domain with clarity and authority.`,
+    },
+    {
+      title: `Overcoming Systemic Friction: Identifying Critical Roadblocks`,
+      summary: `A thorough analysis of common failure modes, misconceptions, and strategic blind spots.`,
+    },
+    {
+      title: `Tactical Execution: Putting the Framework into Motion`,
+      summary: `Actionable steps, strategies, and real-world mechanisms to drive tangible results.`,
+    },
+    {
+      title: `Advanced Dynamics: Navigating High-Stakes Complexity`,
+      summary: `Diving into sophisticated nuances, stress-testing approaches, and managing volatile environments.`,
+    },
+    {
+      title: `Case Studies in Mastery: What Sets Leaders Apart`,
+      summary: `Examining real-world examples and decisive choices that yielded disproportionate success.`,
+    },
+    {
+      title: `The Compounding Advantage: Building Enduring Impact`,
+      summary: `How to transition from short-term momentum to long-term sustainability and lasting influence.`,
+    },
+    {
+      title: `Future Horizons: Sustaining Leadership in Changing Times`,
+      summary: `Synthesizing key lessons and future-proofing the core doctrine for ongoing success.`,
+    },
+  ];
+
+  const chapters = [];
+  for (let i = 1; i <= count; i++) {
+    const theme = generalThemes[(i - 1) % generalThemes.length];
+    chapters.push({
+      chapter_number: i,
+      title: i <= generalThemes.length ? theme.title : `Chapter ${i}: Advanced Principles and Continued Execution`,
+      summary: theme.summary,
+    });
+  }
+
   return {
-    chapters: [
-      {
-        chapter_number: 1,
-        title: `The Flaw in Conventional Thinking: Why Status Quo Fails`,
-        summary: `Examines the foundational breakdown of current industry assumptions affecting ${audience} and establishes the core premise of ${thesis}.`,
-      },
-      {
-        chapter_number: 2,
-        title: `The Architecture of Authority: Deconstructing the Core System`,
-        summary: `Breaks down the overarching operational framework into actionable pillars, separating high-leverage assets from low-value friction.`,
-      },
-      {
-        chapter_number: 3,
-        title: `The Diagnostic Engine: Identifying Systemic Bottlenecks`,
-        summary: `A forensic methodology for evaluating existing operations and calculating the true cost of unaddressed vulnerabilities.`,
-      },
-      {
-        chapter_number: 4,
-        title: `Value Anchoring & Asymmetric Leverage`,
-        summary: `Shifting from incremental labor-based metrics to deterministic, high-margin asset realization.`,
-      },
-      {
-        chapter_number: 5,
-        title: `The Implementation Protocol: Step-by-Step Blueprint`,
-        summary: `A granular tactical roadmap for deploying the primary framework within 30 to 60 days.`,
-      },
-      {
-        chapter_number: 6,
-        title: `Autonomous Feedback Loops & Optimization`,
-        summary: `Designing self-correcting telemetry, automated reporting, and qualitative checkpoints to maintain momentum.`,
-      },
-      {
-        chapter_number: 7,
-        title: `Case Studies in Operational Mastery: Field War Stories`,
-        summary: `Real-world post-mortems of successful transformations, highlighting counter-intuitive decisions and catastrophic errors avoided.`,
-      },
-      {
-        chapter_number: 8,
-        title: `The Sovereign Horizon: Sustaining Long-Term IP Supremacy`,
-        summary: `Future-proofing the methodology against technological commoditization and cementing permanent category leadership.`,
-      },
-    ],
+    chapters,
     terminology: {
-      'Sovereign Vector': 'A codified capability that creates recurring enterprise leverage with near-zero marginal human overhead.',
-      'Asymmetric Anchor': 'A value proposition priced strictly against avoided downside catastrophe rather than production labor.',
-      'Deterministic Outcome': 'A repeatable process yielding predictable business metrics with low variance.',
+      'Core Doctrine': 'The foundational methodology that guides all strategic decisions.',
+      'Execution Leverage': 'Aligning deliberate focus with high-impact outcomes.',
+      'Sustained Mastery': 'Continuous refinement that withstands shifting conditions.',
     },
     rolling_abstracts: [
-      'Chapter 1 deconstructs the conventional trap and exposes why existing paradigms lead to inevitable margin decay.',
-      'Chapter 2 establishes the core multi-pillar operating architecture.',
-      'Chapter 3 equips the reader with diagnostic telemetry to pinpoint root bottlenecks in minutes.',
+      'Chapter 1 establishes the fundamental context and core necessity.',
+      'Chapter 2 details the primary operating principles.',
+      'Chapter 3 diagnoses key obstacles and how to overcome them.',
     ],
   };
 }

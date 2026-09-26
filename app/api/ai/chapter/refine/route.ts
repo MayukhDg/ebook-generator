@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
         messages: [
           {
             role: 'system',
-            content: 'You are an elite publishing editor. Refine the provided chapter text according to instructions while preserving overall structure, tone, and markdown formatting.',
+            content: 'You are an elite publishing editor. Refine the provided chapter text according to instructions while preserving overall structure, tone, and markdown formatting. Ensure the revision is 100% faithful to the chapter topic and avoids any unrelated business consulting jargon.',
           },
           { role: 'user', content: prompt },
         ],
@@ -83,22 +83,19 @@ export async function POST(req: NextRequest) {
 
       refinedContent = response.choices[0]?.message.content || currentContent;
     } else {
-      // Deterministic authority refinement simulation
+      // Deterministic topic-aware refinement simulation
       if (instructionType === 'case_study') {
-        refinedContent = `${currentContent}\n\n---\n\n### Practical Case Study: The 48-Hour Overhaul\n\nTo illustrate this principle in practice, consider an advisory partner who implemented this exact framework in Q3. Prior to the intervention, their team spent 35 hours per client onboarding cycle with an average sales cycle of 74 days.\n\nWithin 48 hours of deploying the standardized Diagnostic Protocol:\n- Discovery hours plummeted by 78%.\n- Prospect conversion velocity doubled.\n- Average deal size increased from $18,000 to $48,000 fixed-fee without a single scope negotiation.\n\n*Key Takeaway: The client was not purchasing time; they were purchasing the certainty of avoiding a multi-month implementation quagmire.*`;
+        refinedContent = `${currentContent}\n\n---\n\n### In-Depth Case Study: Key Turning Point in ${chapter.title}\n\nTo observe this dynamic in sharp focus, consider the high-stakes turning point that crystallized this phase. Facing immense pressure and mounting skepticism from outside observers, the pivotal breakthrough emerged not from caution, but from doubling down on core objectives.\n\nKey takeaways from this inflection point:\n- Decisive action altered the momentum before critics could consolidate opposition.\n- Direct communication shifted public attention back to the central message.\n- The outcome established a precedent that redefined the trajectory of future developments.`;
       } else if (instructionType === 'checklist') {
-        refinedContent = `${currentContent}\n\n---\n\n### Sovereign Operator Action Checklist\n\n- [ ] **Inventory Current Bottlenecks**: Identify every repeated manual task taking over 2 hours/week.\n- [ ] **Establish Value Benchmarks**: Calculate the downside catastrophe cost your framework avoids.\n- [ ] **Decouple Billing**: Transition your primary offer from hourly retainers to guaranteed milestone outcomes.\n- [ ] **Deploy Autonomous Telemetry**: Implement self-serve diagnostic reporting for client onboarding.`;
+        refinedContent = `${currentContent}\n\n---\n\n### Strategic Takeaways & Key Milestones\n\n- [ ] **Establish Clarity of Objective**: Define the non-negotiable goals before entering high-stakes arenas.\n- [ ] **Analyze Counter-Moves**: Anticipate opposition tactics and prepare preemptive narratives.\n- [ ] **Control Communication Channels**: Deliver messages directly to core audiences without dilution.\n- [ ] **Turn Crises into Momentum**: Leverage external scrutiny as an opportunity to reinforce authority.`;
       } else if (instructionType === 'conversational_tone') {
         refinedContent = currentContent
           .replace(/In order to facilitate/gi, 'To make')
           .replace(/utilize/gi, 'use')
           .replace(/it is imperative that/gi, 'you must')
-          .replace(/synergistic paradigms/gi, 'practical leverage');
-        if (!refinedContent.includes('**The Bottom Line:**')) {
-          refinedContent += `\n\n**The Bottom Line:** Stop over-complicating the delivery. Your clients want direct, deterministic outcomes. Give them the clarity they cannot find anywhere else.`;
-        }
+          .replace(/synergistic paradigms/gi, 'clear momentum');
       } else {
-        refinedContent = `${currentContent}\n\n> **Editorial Note (${customPrompt || 'Refinement'}):** Refined for maximum practitioner clarity and immediate execution.`;
+        refinedContent = `${currentContent}\n\n> **Editorial Note (${customPrompt || 'Refinement'}):** Refined for maximum narrative clarity and engagement.`;
       }
     }
 

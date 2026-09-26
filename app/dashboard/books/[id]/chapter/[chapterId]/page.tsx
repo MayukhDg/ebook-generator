@@ -24,7 +24,9 @@ import {
   Printer, 
   HelpCircle,
   Wand2,
-  AlertCircle
+  AlertCircle,
+  PlusCircle,
+  Loader2
 } from 'lucide-react';
 import { Book, Chapter, SourceMaterial } from '@/lib/types';
 
@@ -48,6 +50,7 @@ export default function ChapterStudioPage({
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const [revisionHistory, setRevisionHistory] = useState<Array<{ version: number; time: string; text: string }>>([]);
   const [showRevisions, setShowRevisions] = useState<boolean>(false);
+  const [isAddingChapter, setIsAddingChapter] = useState<boolean>(false);
 
   const editorRef = useRef<HTMLTextAreaElement>(null);
 
@@ -90,6 +93,34 @@ export default function ChapterStudioPage({
       } else {
         setSelectedText('');
       }
+    }
+  };
+
+  // Add new chapter directly from studio
+  const handleAddNewChapter = async () => {
+    if (!book || isAddingChapter) return;
+    setIsAddingChapter(true);
+    try {
+      const nextNum = chapters.length + 1;
+      const res = await fetch(`/api/books/${book.id}/chapters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Chapter ${nextNum}: Advancing Operational Authority`,
+          autoGenerateContent: true,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.chapter) {
+          router.push(`/dashboard/books/${book.id}/chapter/${data.chapter.id}`);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to add chapter:', err);
+    } finally {
+      setIsAddingChapter(false);
     }
   };
 
@@ -401,6 +432,24 @@ export default function ChapterStudioPage({
                     </button>
                   );
                 })}
+
+                <button
+                  onClick={handleAddNewChapter}
+                  disabled={isAddingChapter}
+                  className="w-full flex items-center justify-center gap-1.5 p-2 rounded-xl border border-dashed border-slate-700 hover:border-amber-500/50 hover:bg-slate-800/50 text-slate-400 hover:text-amber-400 text-xs font-semibold transition-all mt-2 disabled:opacity-50"
+                >
+                  {isAddingChapter ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      Generating Next Chapter...
+                    </>
+                  ) : (
+                    <>
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      Add Chapter {chapters.length + 1}
+                    </>
+                  )}
+                </button>
               </div>
             )}
 

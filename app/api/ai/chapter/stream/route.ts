@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/lib/data/store';
+import { generateTopicAwareFallbackManuscript } from '@/lib/ai/manuscript';
 import OpenAI from 'openai';
 
 export async function POST(req: NextRequest) {
@@ -51,30 +52,37 @@ export async function POST(req: NextRequest) {
       .map((abs, i) => `Chapter ${i + 1} Abstract: ${abs}`)
       .join('\n');
 
-    const systemPrompt = `You are a world-class non-fiction author and editorial director co-writing an Amazon KDP-grade book.
-The book is: "${book.title}: ${book.subtitle || ''}"
+    const isBiographyOrNarrative = /biograph|memoir|life|history|story|president|trump|politic|war|leader/i.test(
+      `${book.title} ${book.core_thesis} ${book.target_audience}`
+    );
+
+    const systemPrompt = `You are a world-class author, biographer, and editorial director crafting an Amazon KDP-grade book.
+The book is: "${book.title}${book.subtitle ? `: ${book.subtitle}` : ''}"
 Tone & Voice: ${book.tone_voice}
 Target Audience: ${book.target_audience}
-Core Thesis: ${book.core_thesis}
+Core Thesis / Narrative Arc: ${book.core_thesis}
 
 GLOBAL MEMORY CONTEXT:
-Terminology Lexicon:
+Key Themes & Lexicon:
 ${terminologyStr || 'None defined yet.'}
 
 Rolling Abstracts of Preceding Chapters:
 ${rollingAbstractsStr || previousChapters || 'This is Chapter 1.'}
 
-SOURCE MATERIALS & VOICE TRANSCRIPTS (Ground your chapter in these authentic ideas):
-${sourceSnippets || 'No direct transcripts uploaded yet. Write authoritatively.'}
+SOURCE MATERIALS & TRANSCRIPTS:
+${sourceSnippets || 'No direct transcripts uploaded yet. Write authoritatively and richly.'}
 
 STRICT EDITORIAL RULES:
-1. Write in clear, compelling, professional markdown format.
-2. Structure with an engaging hook (# Chapter ${chapter.chapter_number}: ${chapter.title}), 3-4 deep tactical subsections (## Subheadings), real-world analogies, concrete operational examples, and a concluding summary checklist.
-3. DO NOT write generic AI fluff, repetitive corporate jargon, or shallow platitudes.
-4. Maintain strict continuity with previously established chapters.
-5. Write thoroughly (1,500 - 2,200 words of rich substance).`;
+1. Write in clear, compelling, professional markdown format starting with: # Chapter ${chapter.chapter_number}: ${chapter.title}
+2. 100% TOPIC RELEVANCE: The entire chapter must strictly focus on this specific chapter topic and the book's core premise.
+${isBiographyOrNarrative ? `3. NARRATIVE & HISTORICAL DEPTH: Write vivid narrative prose, detailed historical context, key figures, dramatic tensions, and reflective analysis.
+4. DO NOT use corporate business consulting frameworks, billing jargon, or client deliverable rubrics.
+5. Structure with 3-4 deep subsections (## Subheadings) detailing pivotal moments and analyses.` : `3. SUBSTANTIVE STRUCTURE: Structure with an engaging opening hook, 3-4 deep thematic subsections (## Subheadings), concrete examples, and clear takeaways.
+4. Avoid generic filler, corporate clichés, or hollow platitudes.`}
+5. Maintain strict continuity with previously established chapters.
+6. Write thoroughly (1,200 - 2,000 words of rich, substantive prose).`;
 
-    const userPrompt = `Write the complete text for Chapter ${chapter.chapter_number}: "${chapter.title}".
+    const userPrompt = `Write the complete, in-depth text for Chapter ${chapter.chapter_number}: "${chapter.title}".
 Chapter Intent / Summary: ${chapter.summary || 'Comprehensive breakdown of this topic.'}
 ${customPrompt ? `Special author instruction: ${customPrompt}` : ''}`;
 
@@ -129,7 +137,17 @@ ${customPrompt ? `Special author instruction: ${customPrompt}` : ''}`;
       });
     } else {
       // Deterministic SSE simulation for fast, offline preview & instant testing
-      const simulatedText = getSimulatedChapterContent(chapter.chapter_number, chapter.title, book.title, book.tone_voice);
+      const simulatedText = generateTopicAwareFallbackManuscript({
+        chapterNumber: chapter.chapter_number,
+        chapterTitle: chapter.title,
+        chapterSummary: chapter.summary,
+        bookTitle: book.title,
+        subtitle: book.subtitle,
+        targetAudience: book.target_audience,
+        coreThesis: book.core_thesis,
+        toneVoice: book.tone_voice,
+        terminology: book.global_context?.terminology || {},
+      });
       const encoder = new TextEncoder();
       const chunks = simulatedText.match(/.{1,45}/g) || [simulatedText];
 
@@ -164,52 +182,4 @@ ${customPrompt ? `Special author instruction: ${customPrompt}` : ''}`;
     console.error('Error streaming chapter:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
-}
-
-function getSimulatedChapterContent(num: number, title: string, bookTitle: string, tone: string): string {
-  return `# Chapter ${num}: ${title}
-
-In high-stakes professional environments, true authority is never claimed through volume—it is demonstrated through precision.
-
-When we examine why most conventional methodologies fail, the root flaw is almost always structural: practitioners attempt to solve systemic architecture problems using brute-force manual labor.
-
----
-
-## 1. The Anatomy of Systemic Leverage
-
-Every operational workflow contains friction points that consume an inordinate percentage of cognitive bandwidth. In the context of *${bookTitle}*, these friction points create an invisible barrier between intention and execution.
-
-Consider the fundamental distinction:
-- **Linear Execution:** Output scales strictly in proportion to inputs (time, personnel, meetings).
-- **Asymmetric Systems:** A single codified framework compounds across hundreds of client cohorts without human latency.
-
-When you transition from linear delivery to sovereign asset architecture, your perspective shifts entirely. You are no longer managing calendar blocks; you are optimizing an engine.
-
----
-
-## 2. Field War Story: The Diagnostic Shift
-
-Let us examine an actual engagement with a mid-market advisory firm generating $3.2M in annual revenue. Despite stellar client reviews, the three founding partners were working 75 hours per week and facing severe talent retention crises.
-
-During our forensic audit, we observed that:
-1. Discovery calls were unstructured, requiring 14 hours of partner prep time per prospective client.
-2. Strategic recommendations were rewritten from scratch for every single client, despite 80% overlap in core root causes.
-3. Pricing was quoted as a blended hourly rate of $450/hr, actively punishing the team whenever they developed automated scripts.
-
-By packaging their proprietary discovery methodology into a structured 3-phase Diagnostic Engine, the firm reduced partner involvement in discovery from 14 hours to 45 minutes of review. 
-
-More importantly, they ceased quoting hours and began selling the **Fixed $45,000 Forensic Roadmap**. Closing velocity increased by 40%, and net profit margins surged from 28% to 62%.
-
----
-
-## 3. Tactical Implementation Checklist
-
-To operationalize the principles of this chapter:
-
-- [ ] **Audit Your Time Inventory:** Categorize every client-facing action into Diagnostic, Prescriptive, or Execution.
-- [ ] **Codify One Tactical Asset:** Select the single diagnostic question or rubric you find yourself repeating on every client Zoom call, and document it as a permanent checklist.
-- [ ] **Establish Value Anchors:** Discontinue time-and-materials quotes for new cohorts; anchor pricing strictly to downside risk mitigation.
-- [ ] **Review Telemetry Weekly:** Track your ratio of synchronous client hours to recurring IP asset revenue.
-
-In the next chapter, we will build upon this foundation to construct the autonomous delivery orchestration layer.`;
 }

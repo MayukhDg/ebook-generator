@@ -21,6 +21,7 @@ import {
   Eye
 } from 'lucide-react';
 import { calculateEstimatedPages, formatNumber } from '@/lib/utils';
+import ChapterOutlineSection from '@/components/book/ChapterOutlineSection';
 
 export default async function BookOverviewPage({
   params,
@@ -159,61 +160,12 @@ export default async function BookOverviewPage({
 
         {/* Two Column Layout: Chapter Outline + Global Context & Sources */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Chapter Outline List (2 Cols) */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-base font-bold text-white flex items-center gap-2">
-                <BookOpen className="h-4 w-4 text-amber-400" />
-                Chapter Outline ({chapters.length} Chapters)
-              </h2>
-              <span className="text-xs text-slate-400">
-                Select any chapter to launch split-screen co-authoring
-              </span>
-            </div>
-
-            <div className="space-y-3">
-              {chapters.map((ch) => (
-                <Link
-                  key={ch.id}
-                  href={`/dashboard/books/${book.id}/chapter/${ch.id}`}
-                  className="group flex items-center justify-between p-4 rounded-2xl border border-slate-800/80 bg-slate-900/60 hover:border-amber-500/50 hover:bg-slate-900/90 transition-all shadow-md"
-                >
-                  <div className="space-y-1 max-w-xl">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-xs font-bold text-amber-400">
-                        Chapter {ch.chapter_number}
-                      </span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded font-semibold ${
-                        ch.status === 'completed'
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : ch.status === 'review'
-                          ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                          : 'bg-slate-800 text-slate-400'
-                      }`}>
-                        {ch.status}
-                      </span>
-                      <span className="text-xs text-slate-500 font-mono">
-                        {ch.word_count || 0} words
-                      </span>
-                    </div>
-                    <h3 className="text-sm font-bold text-white group-hover:text-amber-400 transition-colors">
-                      {ch.title}
-                    </h3>
-                    {ch.summary && (
-                      <p className="text-xs text-slate-400 line-clamp-2">
-                        {ch.summary}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex items-center gap-2 text-slate-500 group-hover:text-amber-400 transition-colors">
-                    <span className="text-xs font-medium hidden sm:inline">Write & Refine</span>
-                    <ChevronRight className="h-4 w-4" />
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </div>
+          {/* Interactive Chapter Outline List (2 Cols) */}
+          <ChapterOutlineSection
+            bookId={book.id}
+            bookTitle={book.title}
+            initialChapters={chapters}
+          />
 
           {/* Right Column: Global Context Memory & Source Ingestion */}
           <div className="space-y-6">

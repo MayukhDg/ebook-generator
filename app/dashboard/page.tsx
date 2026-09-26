@@ -42,7 +42,9 @@ export default function DashboardPage() {
   const [newAudience, setNewAudience] = useState('');
   const [newThesis, setNewThesis] = useState('');
   const [newTone, setNewTone] = useState('Authoritative & Practical');
+  const [newChapterCount, setNewChapterCount] = useState<number | string>(10);
   const [newCoverVision, setNewCoverVision] = useState('');
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadDashboardData() {
@@ -76,7 +78,10 @@ export default function DashboardPage() {
     if (!newTitle || !newAudience || !newThesis) return;
 
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
+      const parsedChapterCount = Math.max(1, Math.min(50, parseInt(String(newChapterCount), 10) || 10));
+
       // 1. Create Book Draft
       const res = await fetch('/api/books', {
         method: 'POST',
@@ -92,9 +97,12 @@ export default function DashboardPage() {
       });
 
       const book = await res.json();
+      if (!res.ok) {
+        throw new Error(book.error || 'Failed to create book draft');
+      }
 
-      // 2. Generate Blueprint & Global Context (3 Credits)
-      await fetch('/api/ai/outline', {
+      // 2. Generate Blueprint & Auto-Write All Chapters (3 Credits + 1 Credit per chapter)
+      const outlineRes = await fetch('/api/ai/outline', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -104,8 +112,14 @@ export default function DashboardPage() {
           targetAudience: newAudience,
           coreThesis: newThesis,
           toneVoice: newTone,
+          chapterCount: parsedChapterCount,
         }),
       });
+
+      const outlineData = await outlineRes.json();
+      if (!outlineRes.ok) {
+        throw new Error(outlineData.error || 'Failed to generate book blueprint and chapters');
+      }
 
       // 3. Auto-generate cover if user provided a cover vision (4 Credits)
       if (newCoverVision.trim()) {
@@ -123,8 +137,9 @@ export default function DashboardPage() {
 
       setShowCreateModal(false);
       router.push(`/dashboard/books/${book.id}`);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to create book blueprint:', err);
+      setSubmitError(err.message || 'An error occurred while creating your book blueprint');
     } finally {
       setIsSubmitting(false);
     }
@@ -341,7 +356,7 @@ export default function DashboardPage() {
                   Initialize Authority Book Blueprint
                 </h3>
                 <p className="text-xs text-gray-500 mt-1">
-                  Costs 3 Credits to construct an 8-chapter outline with strict global context memory.
+                  Costs {3 + (Number(newChapterCount) || 10)} Credits (3 Blueprint + {Number(newChapterCount) || 10} for full chapter generation{newCoverVision.trim() ? ' + 4 Cover' : ''}) with zero context drift.
                 </p>
               </div>
               <button
@@ -351,6 +366,13 @@ export default function DashboardPage() {
                 <X className="h-5 w-5" />
               </button>
             </div>
+
+            {submitError && (
+              <div className="mx-6 mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs text-red-600 flex items-center justify-between">
+                <span>{submitError}</span>
+                <Link href="/#pricing" className="font-bold underline ml-2 shrink-0">Top Up Credits</Link>
+              </div>
+            )}
 
             <form onSubmit={handleCreateBook} className="space-y-4 text-xs">
               <div>
@@ -424,6 +446,66 @@ export default function DashboardPage() {
                 </select>
               </div>
 
+              {/* Number of Chapters Specification */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="font-semibold text-gray-700 block text-xs">
+                    Number of Chapters
+                  </label>
+                  <span className="text-[11px] text-orange-600 font-medium">
+                    Default: 10 chapters
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={newChapterCount}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setNewChapterCount('');
+                      } else {
+                        const parsed = parseInt(val, 10);
+                        setNewChapterCount(isNaN(parsed) ? '' : parsed);
+                      }
+                    }}
+                    onBlur={() => {
+                      const parsed = parseInt(String(newChapterCount), 10);
+                      if (isNaN(parsed) || parsed < 1) {
+                        setNewChapterCount(10);
+                      } else if (parsed > 50) {
+                        setNewChapterCount(50);
+                      } else {
+                        setNewChapterCount(parsed);
+                      }
+                    }}
+                    className="w-20 rounded-xl bg-gray-50 border border-gray-200 px-3 py-2 text-center text-sm font-bold text-gray-900 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20"
+                    placeholder="10"
+                  />
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {[3, 5, 8, 10, 12, 15, 20].map((cnt) => (
+                      <button
+                        key={cnt}
+                        type="button"
+                        onClick={() => setNewChapterCount(cnt)}
+                        className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all ${
+                          Number(newChapterCount) === cnt
+                            ? 'bg-orange-500 text-white shadow-sm'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {cnt} Ch
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-[11px] text-gray-400 mt-1">
+                  All {Number(newChapterCount) || 10} chapter manuscripts will be automatically written up front. You can also add more chapters later.
+                </p>
+              </div>
+
               {/* Cover Design Vision (NEW) */}
               <div className="rounded-xl border border-orange-100 bg-orange-50/40 p-4 space-y-2">
                 <div className="flex items-center gap-2">
@@ -459,9 +541,9 @@ export default function DashboardPage() {
                   className="flex items-center gap-2 rounded-full bg-gradient-to-r from-orange-500 to-rose-500 px-5 py-2.5 text-xs font-bold text-white hover:shadow-md hover:shadow-orange-500/25 transition-all disabled:opacity-50"
                 >
                   {isSubmitting ? (
-                    <>Synthesizing Blueprint{newCoverVision.trim() ? ' + Cover' : ''} ...</>
+                    <>Writing Blueprint & All {Number(newChapterCount) || 10} Chapters{newCoverVision.trim() ? ' + Cover' : ''} ...</>
                   ) : (
-                    <>Generate Book Blueprint ({newCoverVision.trim() ? '3 + 4 Credits' : '3 Credits'})</>
+                    <>Generate Book & All {Number(newChapterCount) || 10} Chapters ({3 + (Number(newChapterCount) || 10) + (newCoverVision.trim() ? 4 : 0)} Credits)</>
                   )}
                 </button>
               </div>
