@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { ArrowLeft, Sparkles, Calendar, Tag, ArrowRight, ShieldCheck } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import BlogPostContent from '@/components/blog/BlogPostContent';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -31,6 +32,9 @@ export async function generateMetadata({
     },
   };
 }
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export default async function BlogPostPage({
   params,
@@ -118,63 +122,9 @@ export default async function BlogPostPage({
           </p>
         </header>
 
-        {/* High-Contrast 65ch Measure Reader Layout */}
-        <article className="prose prose-invert max-w-none text-slate-200 text-base leading-relaxed space-y-6">
-          {post.content_markdown.split('\n\n').map((block, idx) => {
-            if (block.startsWith('# ')) return null; // Already rendered in header
-
-            if (block.startsWith('## ')) {
-              return (
-                <h2 key={idx} className="text-2xl sm:text-3xl font-bold text-white tracking-tight pt-6 border-b border-slate-800/80 pb-2">
-                  {block.replace('## ', '')}
-                </h2>
-              );
-            }
-
-            if (block.startsWith('### ')) {
-              return (
-                <h3 key={idx} className="text-lg sm:text-xl font-bold text-amber-400 pt-4">
-                  {block.replace('### ', '')}
-                </h3>
-              );
-            }
-
-            if (block.startsWith('| ')) {
-              // Simple markdown table rendering
-              const rows = block.split('\n').filter((r) => !r.includes('---'));
-              return (
-                <div key={idx} className="my-6 overflow-x-auto rounded-xl border border-slate-800 bg-slate-950/60 p-2">
-                  <table className="w-full text-xs text-left">
-                    <tbody>
-                      {rows.map((row, rIdx) => (
-                        <tr key={rIdx} className="border-b border-slate-800/80">
-                          {row.split('|').filter((c) => c.trim().length > 0).map((cell, cIdx) => (
-                            <td key={cIdx} className="py-2 px-3 text-slate-300">
-                              {cell.trim()}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              );
-            }
-
-            if (block.startsWith('```')) {
-              return (
-                <pre key={idx} className="rounded-xl border border-slate-800 bg-slate-950 p-4 font-mono text-xs text-slate-300 overflow-x-auto my-4">
-                  <code>{block.replace(/```[a-z]*\n?/g, '')}</code>
-                </pre>
-              );
-            }
-
-            return (
-              <p key={idx} className="text-slate-300 leading-relaxed">
-                {block.replace(/\*\*/g, '').replace(/\*/g, '')}
-              </p>
-            );
-          })}
+        {/* High-Contrast 68ch Measure Editorial Reader Layout */}
+        <article className="max-w-none">
+          <BlogPostContent content={post.content_markdown} />
         </article>
 
         {/* In-Article Conversion Banner */}

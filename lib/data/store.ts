@@ -531,7 +531,6 @@ class ProductionDataStore {
         .select('*')
         .eq('slug', slug)
         .maybeSingle();
-
       if (data) return data as BlogPost;
     }
 

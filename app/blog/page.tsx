@@ -11,6 +11,9 @@ export const metadata = {
   description: 'Technical breakdowns, publishing frameworks, and non-fiction authoring strategies for consultants, founders, and high-output operators.',
 };
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function BlogIndexPage() {
   const posts = await store.getBlogPosts(true);
 

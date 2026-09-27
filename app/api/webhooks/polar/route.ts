@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Webhook } from 'standardwebhooks';
 import { validateEvent, WebhookVerificationError } from '@polar-sh/sdk/webhooks';
 import { store } from '@/lib/data/store';
 import { PRICING_PLANS, CREDIT_PACKS, POLAR_PRODUCT_IDS } from '@/lib/polar/config';
@@ -15,6 +16,23 @@ function resolveProductType(productId?: string | null): { planId?: string; packI
   return {};
 }
 
+function verifyWebhook(rawBody: string, headers: Record<string, string>, secret: string): any {
+  const cleanSecret = secret.trim();
+
+  // 1. Standard Webhooks verification (natively supports whsec_ prefixed secrets)
+  try {
+    const wh = new Webhook(cleanSecret);
+    return wh.verify(rawBody, headers);
+  } catch (whErr: any) {
+    // 2. Fallback to Polar SDK validateEvent in case of legacy raw string secrets
+    try {
+      return validateEvent(rawBody, headers, cleanSecret);
+    } catch {
+      throw whErr;
+    }
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
@@ -23,16 +41,12 @@ export async function POST(req: NextRequest) {
 
     let event: any;
 
-    if (webhookSecret && !webhookSecret.includes('mock')) {
+    if (webhookSecret && !webhookSecret.includes('mock') && webhookSecret.trim().length > 5) {
       try {
-        event = validateEvent(rawBody, headers, webhookSecret);
+        event = verifyWebhook(rawBody, headers, webhookSecret);
       } catch (err: any) {
-        if (err instanceof WebhookVerificationError) {
-          console.error('Polar webhook signature verification failed:', err.message);
-          return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 403 });
-        }
-        console.error('Polar webhook verification error:', err);
-        return NextResponse.json({ error: 'Webhook validation failed' }, { status: 400 });
+        console.error('Polar webhook signature verification failed:', err.message);
+        return NextResponse.json({ error: `Invalid webhook signature: ${err.message}` }, { status: 403 });
       }
     } else {
       // Local dev / test fallback
@@ -53,7 +67,8 @@ export async function POST(req: NextRequest) {
       // 1. Order Created / Paid (One-Time Purchases & Subscription Initial/Renewals)
       // -----------------------------------------------------------------------
       case 'order.created':
-      case 'order.paid': {
+      case 'order.paid':
+      case 'order.updated': {
         // Only grant credits if the order is actually paid
         const isPaid = data.paid === true || data.status === 'paid';
         if (!isPaid) {

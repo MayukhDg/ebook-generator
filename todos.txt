@@ -1,3 +1,4 @@
-1. Change payment provider to Polar
-2. Write SEO/AEO blogs for example. - how to get started with digital publishing
+1. Complete migration of payment provider to Polar
+2. [COMPLETED] Correct the formatting of blog (rich markdown rendering, tables, callouts, lists, headers, and no-store caching)
 3. The title of the book should be placed properly dependign on the photo 
+4. Use foliocraft to generate an e-book of my own and share it. 

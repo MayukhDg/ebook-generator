@@ -63,6 +63,12 @@ export async function POST(req: NextRequest) {
         ? `${fallbackSuccess}&checkout_id={CHECKOUT_ID}`
         : `${fallbackSuccess}?checkout_id={CHECKOUT_ID}`;
 
+      // Construct metadata with only non-empty values (Polar requires string length >= 1)
+      const metadata: Record<string, string> = {};
+      if (userId) metadata.userId = userId;
+      if (resolvedPlanId) metadata.planId = resolvedPlanId;
+      if (resolvedPackId) metadata.packId = resolvedPackId;
+
       // Create Polar Checkout Session
       const checkout = await polar.checkouts.create({
         products: [productId],
@@ -70,11 +76,7 @@ export async function POST(req: NextRequest) {
         returnUrl: fallbackCancel,
         customerEmail: user?.email || undefined,
         externalCustomerId: userId || undefined,
-        metadata: {
-          userId: userId || '',
-          planId: resolvedPlanId || '',
-          packId: resolvedPackId || '',
-        },
+        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
       });
 
       return NextResponse.json({ url: checkout.url });

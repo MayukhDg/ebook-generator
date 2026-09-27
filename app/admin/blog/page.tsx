@@ -27,6 +27,7 @@ import {
 } from 'lucide-react';
 import { FunnelStage, BlogPost } from '@/lib/types';
 import { slugify, formatDate } from '@/lib/utils';
+import BlogPostContent from '@/components/blog/BlogPostContent';
 
 export default function AdminBlogCMSPage() {
   const formRef = useRef<HTMLFormElement>(null);
@@ -39,6 +40,7 @@ export default function AdminBlogCMSPage() {
   const [metaDescription, setMetaDescription] = useState('');
   const [keywords, setKeywords] = useState('');
   const [contentMarkdown, setContentMarkdown] = useState('');
+  const [editorTab, setEditorTab] = useState<'write' | 'preview'>('write');
   const [isPublished, setIsPublished] = useState(true);
   const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>([
     { question: '', answer: '' },
@@ -484,22 +486,62 @@ Embedding **FAQPage and Article JSON-LD schemas** ensures your frameworks are in
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center justify-between mb-2">
                 <label className="text-xs font-semibold text-gray-700 block">
                   Markdown Body Content *
                 </label>
-                <span className="text-[11px] text-gray-400">
-                  {contentMarkdown ? `${contentMarkdown.trim().split(/\s+/).length} words` : 'Markdown supported'}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-[11px] text-gray-400">
+                    {contentMarkdown ? `${contentMarkdown.trim().split(/\s+/).filter(Boolean).length} words` : 'Markdown supported'}
+                  </span>
+                  <div className="flex items-center rounded-lg bg-gray-100 p-0.5 border border-gray-200 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setEditorTab('write')}
+                      className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                        editorTab === 'write'
+                          ? 'bg-white text-gray-900 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-900'
+                      }`}
+                    >
+                      Write
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditorTab('preview')}
+                      className={`px-3 py-1 rounded-md font-semibold transition-all ${
+                        editorTab === 'preview'
+                          ? 'bg-white text-orange-600 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-900'
+                      }`}
+                    >
+                      Live Preview
+                    </button>
+                  </div>
+                </div>
               </div>
-              <textarea
-                required
-                rows={18}
-                placeholder={"# Article Title\n\nWrite your comprehensive markdown article here with headings (##), lists, and bold text..."}
-                value={contentMarkdown}
-                onChange={(e) => setContentMarkdown(e.target.value)}
-                className="w-full rounded-xl bg-white border border-gray-200 p-4 text-xs font-mono text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 leading-relaxed"
-              />
+
+              {editorTab === 'write' ? (
+                <textarea
+                  required
+                  rows={20}
+                  placeholder={"# Article Title\n\nWrite your comprehensive markdown article here with headings (##), lists, and bold text..."}
+                  value={contentMarkdown}
+                  onChange={(e) => setContentMarkdown(e.target.value)}
+                  className="w-full rounded-xl bg-white border border-gray-200 p-4 text-xs font-mono text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 leading-relaxed"
+                />
+              ) : (
+                <div className="w-full rounded-2xl border border-slate-800 bg-[#080d1a] p-6 sm:p-8 text-slate-200 overflow-y-auto max-h-[600px] shadow-inner">
+                  <h1 className="text-2xl sm:text-3xl font-extrabold text-white mb-6 border-b border-slate-800/80 pb-3">
+                    {title || 'Untitled Article'}
+                  </h1>
+                  {contentMarkdown ? (
+                    <BlogPostContent content={contentMarkdown} />
+                  ) : (
+                    <p className="text-slate-500 italic text-sm">Start typing in the "Write" tab to see live formatted preview here.</p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
