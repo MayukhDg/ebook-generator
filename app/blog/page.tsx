@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { store } from '@/lib/data/store';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { FileText, Sparkles, ArrowRight, ShieldCheck, Tag } from 'lucide-react';
+import { FileText, Sparkles, ArrowRight, Calendar } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export const metadata = {
@@ -65,18 +65,13 @@ export default async function BlogIndexPage() {
                 className="group flex flex-col justify-between rounded-3xl border border-slate-800/80 bg-slate-900/60 p-6 backdrop-blur-xl transition-all hover:border-amber-500/40 hover:bg-slate-900/90 shadow-xl"
               >
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                      post.funnel_stage === 'awareness'
-                        ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20'
-                        : post.funnel_stage === 'consideration'
-                        ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                    }`}>
-                      {post.funnel_stage}
-                    </span>
-                    <span className="text-[11px] text-slate-500">
+                  <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <Calendar className="h-3.5 w-3.5 text-slate-500" />
                       {formatDate(post.published_at)}
+                    </span>
+                    <span className="font-mono text-[11px] text-slate-500">
+                      6 min read
                     </span>
                   </div>
 
@@ -89,11 +84,7 @@ export default async function BlogIndexPage() {
                   </p>
                 </div>
 
-                <div className="mt-6 border-t border-slate-800/80 pt-4 flex items-center justify-between text-xs text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <Tag className="h-3 w-3 text-slate-500" />
-                    {post.target_keywords?.[0] || 'Publishing'}
-                  </span>
+                <div className="mt-6 border-t border-slate-800/80 pt-4 flex items-center justify-end text-xs">
                   <span className="font-bold text-amber-400 group-hover:translate-x-1 transition-transform flex items-center gap-1">
                     Read Article <ArrowRight className="h-3.5 w-3.5" />
                   </span>

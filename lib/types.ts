@@ -37,6 +37,11 @@ export interface CoverStyleConfig {
   layout: 'center' | 'left' | 'split' | 'editorial';
   show_barcode_box: boolean;
   author_name: string;
+  title_position?: 'top' | 'center' | 'bottom';
+  title_align?: 'left' | 'center' | 'right';
+  title_offset_y?: number;
+  show_badge?: boolean;
+  overlay_opacity?: number;
 }
 
 export interface SourceMaterial {

@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { store } from '@/lib/data/store';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { ArrowLeft, Sparkles, Calendar, Tag, ArrowRight, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Sparkles, Calendar, ArrowRight } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import BlogPostContent from '@/components/blog/BlogPostContent';
 import type { Metadata } from 'next';
@@ -102,15 +102,12 @@ export default async function BlogPostPage({
 
         {/* Article Header */}
         <header className="space-y-4 border-b border-slate-800/80 pb-8">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="rounded-full bg-amber-500/10 border border-amber-500/30 px-2.5 py-0.5 text-xs font-semibold text-amber-300 uppercase">
-              {post.funnel_stage}
-            </span>
-            <span className="text-xs text-slate-500 flex items-center gap-1">
-              <Calendar className="h-3 w-3" /> {formatDate(post.published_at)}
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-slate-500" /> {formatDate(post.published_at)}
             </span>
             <span className="text-slate-600">•</span>
-            <span className="text-xs text-slate-400 font-mono">6 min read</span>
+            <span className="font-mono text-slate-500">6 min read</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">

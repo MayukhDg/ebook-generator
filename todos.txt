@@ -1,4 +1,5 @@
 1. Complete migration of payment provider to Polar
 2. [COMPLETED] Correct the formatting of blog (rich markdown rendering, tables, callouts, lists, headers, and no-store caching)
-3. The title of the book should be placed properly dependign on the photo 
+3. [COMPLETED] The title of the book should be placed properly depending on the photo (Top/Center/Bottom positioning, alignment, fine-tune Y-nudge, photo contrast scrim, and synced PDF export)
 4. Use foliocraft to generate an e-book of my own and share it. 
+5. Include the functionality to add PDFs, voice notes as sources to the 

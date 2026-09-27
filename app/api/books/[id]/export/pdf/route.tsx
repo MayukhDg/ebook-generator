@@ -264,6 +264,14 @@ export async function GET(
     const accentColor = book.cover_style_config?.accent_color || '#38BDF8';
     const authorName = book.cover_style_config?.author_name || 'Author';
 
+    const titlePosition = book.cover_style_config?.title_position || 'center';
+    const titleAlign = book.cover_style_config?.title_align || 'center';
+    const titleOffsetY = book.cover_style_config?.title_offset_y || 0;
+    const showBadge = book.cover_style_config?.show_badge !== false;
+    const overlayOpacity = (book.cover_style_config?.overlay_opacity ?? 45) / 100;
+    const alignFlex: 'center' | 'flex-start' | 'flex-end' = 
+      titleAlign === 'left' ? 'flex-start' : titleAlign === 'right' ? 'flex-end' : 'center';
+
     // Pre-fetch background image as base64 data URI for high-res resilience in Node
     const coverUrl = book.cover_bg_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80';
     let coverImageSrc: string = coverUrl;
@@ -306,35 +314,112 @@ export async function GET(
             {coverImageSrc ? (
               <Image src={coverImageSrc} style={styles.coverImage} />
             ) : null}
-            <View style={styles.coverOverlay} />
+            <View style={[styles.coverOverlay, { opacity: overlayOpacity }]} />
             <View style={styles.coverSpineShadow} />
 
-            <View style={styles.coverContainer}>
-              <View style={[styles.badgeContainer, { borderColor: accentColor }]}>
-                <Text style={[styles.badgeText, { color: accentColor }]}>
-                  AN AUTHORITY BLUEPRINT
-                </Text>
-              </View>
+            {titlePosition === 'top' ? (
+              <View style={[styles.coverContainer, { justifyContent: 'space-between', alignItems: alignFlex }]}>
+                {/* Top Block: Badge + Title + Subtitle */}
+                <View style={{ width: '100%', alignItems: alignFlex, marginTop: titleOffsetY }}>
+                  {showBadge && (
+                    <View style={[styles.badgeContainer, { borderColor: accentColor, alignSelf: alignFlex, marginBottom: 12 }]}>
+                      <Text style={[styles.badgeText, { color: accentColor }]}>
+                        AN AUTHORITY BLUEPRINT
+                      </Text>
+                    </View>
+                  )}
+                  <View style={[styles.centerSection, { alignItems: alignFlex }]}>
+                    <Text style={[styles.coverTitle, { color: titleColor, fontFamily: coverTitleFont, textAlign: titleAlign }]}>
+                      {book.title}
+                    </Text>
+                    <View style={[styles.coverDivider, { backgroundColor: accentColor, alignSelf: alignFlex }]} />
+                    {book.subtitle && (
+                      <Text style={[styles.coverSubtitle, { color: subtitleColor, fontFamily: coverSubtitleFont, textAlign: titleAlign }]}>
+                        {book.subtitle}
+                      </Text>
+                    )}
+                  </View>
+                </View>
 
-              <View style={styles.centerSection}>
-                <Text style={[styles.coverTitle, { color: titleColor, fontFamily: coverTitleFont }]}>
-                  {book.title}
-                </Text>
-                <View style={[styles.coverDivider, { backgroundColor: accentColor }]} />
-                {book.subtitle && (
-                  <Text style={[styles.coverSubtitle, { color: subtitleColor, fontFamily: coverSubtitleFont }]}>
-                    {book.subtitle}
+                {/* Middle Spacer - leaves photo subject clear */}
+                <View style={{ flex: 1 }} />
+
+                {/* Bottom Block: Author */}
+                <View style={[styles.footerSection, { alignItems: alignFlex }]}>
+                  <Text style={styles.authorPrefix}>AUTHORED BY</Text>
+                  <Text style={[styles.coverAuthorName, { color: titleColor }]}>
+                    {authorName}
                   </Text>
-                )}
+                </View>
               </View>
+            ) : titlePosition === 'bottom' ? (
+              <View style={[styles.coverContainer, { justifyContent: 'space-between', alignItems: alignFlex }]}>
+                {/* Top Block: Badge */}
+                <View style={{ width: '100%', alignItems: alignFlex }}>
+                  {showBadge ? (
+                    <View style={[styles.badgeContainer, { borderColor: accentColor, alignSelf: alignFlex }]}>
+                      <Text style={[styles.badgeText, { color: accentColor }]}>
+                        AN AUTHORITY BLUEPRINT
+                      </Text>
+                    </View>
+                  ) : <View style={{ height: 10 }} />}
+                </View>
 
-              <View style={styles.footerSection}>
-                <Text style={styles.authorPrefix}>AUTHORED BY</Text>
-                <Text style={[styles.coverAuthorName, { color: titleColor }]}>
-                  {authorName}
-                </Text>
+                {/* Middle Spacer */}
+                <View style={{ flex: 1 }} />
+
+                {/* Bottom Block: Title + Subtitle + Author */}
+                <View style={{ width: '100%', alignItems: alignFlex, marginTop: titleOffsetY }}>
+                  <View style={[styles.centerSection, { alignItems: alignFlex, marginBottom: 16 }]}>
+                    <Text style={[styles.coverTitle, { color: titleColor, fontFamily: coverTitleFont, textAlign: titleAlign }]}>
+                      {book.title}
+                    </Text>
+                    <View style={[styles.coverDivider, { backgroundColor: accentColor, alignSelf: alignFlex }]} />
+                    {book.subtitle && (
+                      <Text style={[styles.coverSubtitle, { color: subtitleColor, fontFamily: coverSubtitleFont, textAlign: titleAlign }]}>
+                        {book.subtitle}
+                      </Text>
+                    )}
+                  </View>
+
+                  <View style={[styles.footerSection, { alignItems: alignFlex }]}>
+                    <Text style={styles.authorPrefix}>AUTHORED BY</Text>
+                    <Text style={[styles.coverAuthorName, { color: titleColor }]}>
+                      {authorName}
+                    </Text>
+                  </View>
+                </View>
               </View>
-            </View>
+            ) : (
+              <View style={[styles.coverContainer, { justifyContent: 'space-between', alignItems: alignFlex }]}>
+                {showBadge ? (
+                  <View style={[styles.badgeContainer, { borderColor: accentColor, alignSelf: alignFlex }]}>
+                    <Text style={[styles.badgeText, { color: accentColor }]}>
+                      AN AUTHORITY BLUEPRINT
+                    </Text>
+                  </View>
+                ) : <View style={{ height: 10 }} />}
+
+                <View style={[styles.centerSection, { alignItems: alignFlex, marginTop: titleOffsetY }]}>
+                  <Text style={[styles.coverTitle, { color: titleColor, fontFamily: coverTitleFont, textAlign: titleAlign }]}>
+                    {book.title}
+                  </Text>
+                  <View style={[styles.coverDivider, { backgroundColor: accentColor, alignSelf: alignFlex }]} />
+                  {book.subtitle && (
+                    <Text style={[styles.coverSubtitle, { color: subtitleColor, fontFamily: coverSubtitleFont, textAlign: titleAlign }]}>
+                      {book.subtitle}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={[styles.footerSection, { alignItems: alignFlex }]}>
+                  <Text style={styles.authorPrefix}>AUTHORED BY</Text>
+                  <Text style={[styles.coverAuthorName, { color: titleColor }]}>
+                    {authorName}
+                  </Text>
+                </View>
+              </View>
+            )}
           </Page>
         )}
 

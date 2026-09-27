@@ -16,7 +16,13 @@ import {
   Save,
   FileDown,
   AlertCircle,
-  ImageIcon
+  ImageIcon,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  MoveVertical,
+  ArrowUp,
+  ArrowDown
 } from 'lucide-react';
 import { Book, CoverStyleConfig } from '@/lib/types';
 import { calculateSpineWidthInches, calculateEstimatedPages } from '@/lib/utils';
@@ -54,6 +60,23 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
   const [titleText, setTitleText] = useState<string>(book.title || 'The Sovereign Operator');
   const [subtitleText, setSubtitleText] = useState<string>(book.subtitle || 'How to Build a 7-Figure Advisory Firm on Autonomous Systems');
 
+  // Title Positioning & Framing Options
+  const [titlePosition, setTitlePosition] = useState<'top' | 'center' | 'bottom'>(
+    book.cover_style_config?.title_position || 'center'
+  );
+  const [titleAlign, setTitleAlign] = useState<'left' | 'center' | 'right'>(
+    book.cover_style_config?.title_align || 'center'
+  );
+  const [titleOffsetY, setTitleOffsetY] = useState<number>(
+    book.cover_style_config?.title_offset_y ?? 0
+  );
+  const [showBadge, setShowBadge] = useState<boolean>(
+    book.cover_style_config?.show_badge ?? true
+  );
+  const [overlayOpacity, setOverlayOpacity] = useState<number>(
+    book.cover_style_config?.overlay_opacity ?? 45
+  );
+
   // Custom cover prompt
   const [customCoverPrompt, setCustomCoverPrompt] = useState<string>('');
 
@@ -71,6 +94,11 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
     title?: string;
     subtitle?: string;
     bgUrl?: string;
+    title_position?: 'top' | 'center' | 'bottom';
+    title_align?: 'left' | 'center' | 'right';
+    title_offset_y?: number;
+    show_badge?: boolean;
+    overlay_opacity?: number;
   }) => {
     setIsSaving(true);
     setSaveStatus('saving');
@@ -84,6 +112,11 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
       const nextSubtitleColor = overrides?.subtitle_color || subtitleColor;
       const nextAccentColor = overrides?.accent_color || accentColor;
       const nextAuthorName = overrides?.author_name || authorName;
+      const nextTitlePosition = overrides?.title_position !== undefined ? overrides.title_position : titlePosition;
+      const nextTitleAlign = overrides?.title_align !== undefined ? overrides.title_align : titleAlign;
+      const nextTitleOffsetY = overrides?.title_offset_y !== undefined ? overrides.title_offset_y : titleOffsetY;
+      const nextShowBadge = overrides?.show_badge !== undefined ? overrides.show_badge : showBadge;
+      const nextOverlayOpacity = overrides?.overlay_opacity !== undefined ? overrides.overlay_opacity : overlayOpacity;
 
       const payload = {
         title: nextTitle,
@@ -98,6 +131,11 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
           author_name: nextAuthorName,
           layout: book.cover_style_config?.layout || 'center',
           show_barcode_box: book.cover_style_config?.show_barcode_box ?? true,
+          title_position: nextTitlePosition,
+          title_align: nextTitleAlign,
+          title_offset_y: nextTitleOffsetY,
+          show_badge: nextShowBadge,
+          overlay_opacity: nextOverlayOpacity,
         },
       };
 
@@ -262,6 +300,210 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
               onBlur={() => handleSaveCover()}
               className="w-full rounded-lg bg-gray-50 border border-gray-200 px-3 py-1.5 text-xs text-gray-900 focus:outline-none focus:border-orange-400"
             />
+          </div>
+        </div>
+
+        {/* Title Placement & Framing Controls */}
+        <div className="space-y-3 rounded-xl border border-orange-200/60 bg-orange-50/30 p-3.5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+              <MoveVertical className="h-3.5 w-3.5 text-orange-500" />
+              Title Position & Placement
+            </label>
+            <span className="text-[10px] text-orange-600 font-semibold bg-orange-100/70 px-1.5 py-0.5 rounded">
+              Photo Safe
+            </span>
+          </div>
+          <p className="text-[11px] text-gray-500 leading-normal">
+            Reposition the title so it never covers faces or focal points of your cover picture.
+          </p>
+
+          {/* Position Selector (Top / Center / Bottom) */}
+          <div>
+            <span className="text-[10px] font-semibold text-gray-600 block mb-1.5 uppercase tracking-wider">
+              Vertical Position
+            </span>
+            <div className="grid grid-cols-3 gap-1.5 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  setTitlePosition('top');
+                  handleSaveCover({ title_position: 'top' });
+                }}
+                className={`py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                  titlePosition === 'top'
+                    ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <ArrowUp className="h-3 w-3" /> Top
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTitlePosition('center');
+                  handleSaveCover({ title_position: 'center' });
+                }}
+                className={`py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                  titlePosition === 'center'
+                    ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                Center
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTitlePosition('bottom');
+                  handleSaveCover({ title_position: 'bottom' });
+                }}
+                className={`py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                  titlePosition === 'bottom'
+                    ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                }`}
+              >
+                <ArrowDown className="h-3 w-3" /> Bottom
+              </button>
+            </div>
+          </div>
+
+          {/* Text Alignment */}
+          <div>
+            <span className="text-[10px] font-semibold text-gray-600 block mb-1.5 uppercase tracking-wider">
+              Text Alignment
+            </span>
+            <div className="grid grid-cols-3 gap-1.5 bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
+              <button
+                type="button"
+                onClick={() => {
+                  setTitleAlign('left');
+                  handleSaveCover({ title_align: 'left' });
+                }}
+                className={`py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all ${
+                  titleAlign === 'left'
+                    ? 'bg-orange-50 text-orange-600 border border-orange-200 font-bold'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <AlignLeft className="h-3.5 w-3.5" /> Left
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTitleAlign('center');
+                  handleSaveCover({ title_align: 'center' });
+                }}
+                className={`py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all ${
+                  titleAlign === 'center'
+                    ? 'bg-orange-50 text-orange-600 border border-orange-200 font-bold'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <AlignCenter className="h-3.5 w-3.5" /> Center
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTitleAlign('right');
+                  handleSaveCover({ title_align: 'right' });
+                }}
+                className={`py-1.5 px-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-all ${
+                  titleAlign === 'right'
+                    ? 'bg-orange-50 text-orange-600 border border-orange-200 font-bold'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                <AlignRight className="h-3.5 w-3.5" /> Right
+              </button>
+            </div>
+          </div>
+
+          {/* Fine-Tuning Vertical Offset Slider */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">
+                Height Adjustment (Fine-Tune)
+              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold text-orange-600">
+                  {titleOffsetY > 0 ? `+${titleOffsetY}px` : `${titleOffsetY}px`}
+                </span>
+                {titleOffsetY !== 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTitleOffsetY(0);
+                      handleSaveCover({ title_offset_y: 0 });
+                    }}
+                    className="text-[9px] text-gray-400 hover:text-gray-700 underline cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                )}
+              </div>
+            </div>
+            <input
+              type="range"
+              min={-120}
+              max={120}
+              step={4}
+              value={titleOffsetY}
+              onChange={(e) => setTitleOffsetY(Number(e.target.value))}
+              onMouseUp={() => handleSaveCover()}
+              onTouchEnd={() => handleSaveCover()}
+              className="w-full accent-orange-500 cursor-pointer h-1.5 bg-gray-200 rounded-lg"
+            />
+            <div className="flex justify-between text-[9px] text-gray-400 mt-0.5">
+              <span>Higher (-120px)</span>
+              <span>Lower (+120px)</span>
+            </div>
+          </div>
+
+          {/* Photo Darkening / Contrast Scrim Slider */}
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider">
+                Photo Contrast Tint
+              </span>
+              <span className="text-[10px] font-mono font-bold text-gray-600">
+                {overlayOpacity}%
+              </span>
+            </div>
+            <input
+              type="range"
+              min={10}
+              max={85}
+              step={5}
+              value={overlayOpacity}
+              onChange={(e) => setOverlayOpacity(Number(e.target.value))}
+              onMouseUp={() => handleSaveCover()}
+              onTouchEnd={() => handleSaveCover()}
+              className="w-full accent-orange-500 cursor-pointer h-1.5 bg-gray-200 rounded-lg"
+            />
+          </div>
+
+          {/* Toggle Blueprint Badge */}
+          <div className="flex items-center justify-between pt-1 border-t border-orange-200/40">
+            <span className="text-[11px] font-medium text-gray-700">
+              Authority Blueprint Badge
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                const nextVal = !showBadge;
+                setShowBadge(nextVal);
+                handleSaveCover({ show_badge: nextVal });
+              }}
+              className={`px-2.5 py-1 rounded-md text-[10px] font-bold transition-colors ${
+                showBadge
+                  ? 'bg-orange-100 text-orange-700 border border-orange-200'
+                  : 'bg-gray-100 text-gray-500 border border-gray-200'
+              }`}
+            >
+              {showBadge ? 'Visible' : 'Hidden'}
+            </button>
           </div>
         </div>
 
@@ -444,53 +686,208 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
               backgroundPosition: 'center',
             }}
           >
-            {/* Subtle paper grain & lighting overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/60 pointer-events-none" />
+            {/* Dynamic contrast overlay */}
+            <div 
+              className="absolute inset-0 pointer-events-none transition-opacity"
+              style={{
+                backgroundColor: '#000000',
+                opacity: overlayOpacity / 100,
+              }}
+            />
+            {/* Scrim gradients for readability when title is top or bottom */}
+            {titlePosition === 'bottom' && (
+              <div className="absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none" />
+            )}
+            {titlePosition === 'top' && (
+              <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-black/85 via-black/45 to-transparent pointer-events-none" />
+            )}
 
             {/* Book Spine Shadow Left Border */}
             <div className="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-black/60 to-transparent pointer-events-none" />
 
             {/* Vector Typography Overlay (100% Crisp, Vector Quality) */}
-            <div className="relative z-10 h-full flex flex-col justify-between p-8 text-center">
-              {/* Header / Accent */}
-              <div>
-                <div className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-[0.25em] mb-4" style={{ color: accentColor, border: `1px solid ${accentColor}40`, backgroundColor: `${accentColor}15` }}>
-                  AN AUTHORITY BLUEPRINT
-                </div>
-              </div>
+            <div 
+              className={`relative z-10 h-full flex flex-col justify-between p-8 ${
+                titleAlign === 'left' ? 'text-left items-start' : titleAlign === 'right' ? 'text-right items-end' : 'text-center items-center'
+              }`}
+            >
+              {titlePosition === 'top' ? (
+                <>
+                  {/* Top: Badge + Title + Subtitle */}
+                  <div 
+                    className={`w-full space-y-3 transition-transform duration-150 ease-out ${
+                      titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'
+                    }`}
+                    style={{ transform: `translateY(${titleOffsetY}px)` }}
+                  >
+                    {showBadge && (
+                      <div className={`mb-3 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>
+                        <div 
+                          className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-[0.25em]" 
+                          style={{ color: accentColor, border: `1px solid ${accentColor}40`, backgroundColor: `${accentColor}20` }}
+                        >
+                          AN AUTHORITY BLUEPRINT
+                        </div>
+                      </div>
+                    )}
+                    <h1 
+                      className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight drop-shadow-md"
+                      style={{ color: titleColor, fontFamily: fontFamily }}
+                    >
+                      {titleText}
+                    </h1>
+                    
+                    {/* Minimalist Divider Accent */}
+                    <div 
+                      className={`w-12 h-0.5 my-2 ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} 
+                      style={{ backgroundColor: accentColor }} 
+                    />
 
-              {/* Central Title & Subtitle Area */}
-              <div className="space-y-3">
-                <h1 
-                  className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight"
-                  style={{ color: titleColor, fontFamily: fontFamily }}
-                >
-                  {titleText}
-                </h1>
-                
-                {/* Minimalist Divider Accent */}
-                <div className="w-12 h-0.5 mx-auto my-2" style={{ backgroundColor: accentColor }} />
+                    <p 
+                      className={`text-xs sm:text-sm font-medium leading-relaxed max-w-[300px] opacity-90 drop-shadow-sm ${
+                        titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'
+                      }`}
+                      style={{ color: subtitleColor }}
+                    >
+                      {subtitleText}
+                    </p>
+                  </div>
 
-                <p 
-                  className="text-xs sm:text-sm font-medium leading-relaxed max-w-[280px] mx-auto opacity-90"
-                  style={{ color: subtitleColor }}
-                >
-                  {subtitleText}
-                </p>
-              </div>
+                  {/* Empty Center Spacer to preserve the photo face/subject */}
+                  <div className="flex-1" />
 
-              {/* Footer Author Name */}
-              <div className="border-t border-white/10 pt-4">
-                <span className="text-[10px] tracking-widest text-slate-400 uppercase block mb-0.5">
-                  Authored By
-                </span>
-                <span 
-                  className="text-sm font-bold tracking-wider"
-                  style={{ color: titleColor, fontFamily: fontFamily }}
-                >
-                  {authorName}
-                </span>
-              </div>
+                  {/* Footer Author Name */}
+                  <div className={`w-full border-t border-white/10 pt-4 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>
+                    <span className="text-[10px] tracking-widest text-slate-400 uppercase block mb-0.5">
+                      Authored By
+                    </span>
+                    <span 
+                      className="text-sm font-bold tracking-wider drop-shadow"
+                      style={{ color: titleColor, fontFamily: fontFamily }}
+                    >
+                      {authorName}
+                    </span>
+                  </div>
+                </>
+              ) : titlePosition === 'bottom' ? (
+                <>
+                  {/* Top: Optional Badge */}
+                  <div className="w-full">
+                    {showBadge ? (
+                      <div className={titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}>
+                        <div 
+                          className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-[0.25em]" 
+                          style={{ color: accentColor, border: `1px solid ${accentColor}40`, backgroundColor: `${accentColor}20` }}
+                        >
+                          AN AUTHORITY BLUEPRINT
+                        </div>
+                      </div>
+                    ) : <div className="h-4" />}
+                  </div>
+
+                  {/* Empty Center Spacer */}
+                  <div className="flex-1" />
+
+                  {/* Bottom: Title + Subtitle + Author */}
+                  <div 
+                    className={`w-full space-y-3 transition-transform duration-150 ease-out ${
+                      titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'
+                    }`}
+                    style={{ transform: `translateY(${titleOffsetY}px)` }}
+                  >
+                    <h1 
+                      className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight drop-shadow-lg"
+                      style={{ color: titleColor, fontFamily: fontFamily }}
+                    >
+                      {titleText}
+                    </h1>
+                    
+                    <div 
+                      className={`w-12 h-0.5 my-2 ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} 
+                      style={{ backgroundColor: accentColor }} 
+                    />
+
+                    <p 
+                      className={`text-xs sm:text-sm font-medium leading-relaxed max-w-[300px] opacity-90 drop-shadow-md ${
+                        titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'
+                      }`}
+                      style={{ color: subtitleColor }}
+                    >
+                      {subtitleText}
+                    </p>
+
+                    <div className={`border-t border-white/10 pt-3 mt-4 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>
+                      <span className="text-[10px] tracking-widest text-slate-400 uppercase block mb-0.5">
+                        Authored By
+                      </span>
+                      <span 
+                        className="text-sm font-bold tracking-wider drop-shadow"
+                        style={{ color: titleColor, fontFamily: fontFamily }}
+                      >
+                        {authorName}
+                      </span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Center Position Default */}
+                  <div className="w-full">
+                    {showBadge ? (
+                      <div className={titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}>
+                        <div 
+                          className="inline-block px-2.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-[0.25em] mb-4" 
+                          style={{ color: accentColor, border: `1px solid ${accentColor}40`, backgroundColor: `${accentColor}15` }}
+                        >
+                          AN AUTHORITY BLUEPRINT
+                        </div>
+                      </div>
+                    ) : <div className="h-4" />}
+                  </div>
+
+                  {/* Central Title & Subtitle Area */}
+                  <div 
+                    className={`w-full space-y-3 transition-transform duration-150 ease-out ${
+                      titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'
+                    }`}
+                    style={{ transform: `translateY(${titleOffsetY}px)` }}
+                  >
+                    <h1 
+                      className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight drop-shadow-md"
+                      style={{ color: titleColor, fontFamily: fontFamily }}
+                    >
+                      {titleText}
+                    </h1>
+                    
+                    <div 
+                      className={`w-12 h-0.5 my-2 ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} 
+                      style={{ backgroundColor: accentColor }} 
+                    />
+
+                    <p 
+                      className={`text-xs sm:text-sm font-medium leading-relaxed max-w-[280px] opacity-90 drop-shadow-sm ${
+                        titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'
+                      }`}
+                      style={{ color: subtitleColor }}
+                    >
+                      {subtitleText}
+                    </p>
+                  </div>
+
+                  {/* Footer Author Name */}
+                  <div className={`w-full border-t border-white/10 pt-4 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>
+                    <span className="text-[10px] tracking-widest text-slate-400 uppercase block mb-0.5">
+                      Authored By
+                    </span>
+                    <span 
+                      className="text-sm font-bold tracking-wider drop-shadow"
+                      style={{ color: titleColor, fontFamily: fontFamily }}
+                    >
+                      {authorName}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -508,7 +905,13 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
               }}
             >
               {/* Darkening tint for back cover legibility */}
-              <div className="absolute inset-0 bg-black/60 pointer-events-none" />
+              <div 
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  backgroundColor: '#000000',
+                  opacity: Math.max(0.55, overlayOpacity / 100),
+                }}
+              />
 
               {/* 1. BACK COVER (Left 46%) */}
               <div className="relative w-[360px] h-full p-6 flex flex-col justify-between text-left border-r border-black/40 z-10">
@@ -560,27 +963,98 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
               </div>
 
               {/* 3. FRONT COVER (Right 360px) */}
-              <div className="relative w-[360px] h-full p-6 flex flex-col justify-between text-center z-10">
-                <div>
-                  <div className="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.2em]" style={{ color: accentColor, border: `1px solid ${accentColor}40` }}>
-                    AUTHORITY EDITION
-                  </div>
-                </div>
+              <div 
+                className={`relative w-[360px] h-full p-6 flex flex-col justify-between z-10 ${
+                  titleAlign === 'left' ? 'text-left items-start' : titleAlign === 'right' ? 'text-right items-end' : 'text-center items-center'
+                }`}
+              >
+                {titlePosition === 'top' ? (
+                  <>
+                    <div 
+                      className="w-full space-y-2 transition-transform duration-150"
+                      style={{ transform: `translateY(${titleOffsetY * 0.8}px)` }}
+                    >
+                      {showBadge && (
+                        <div className={`mb-1 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>
+                          <div className="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.2em]" style={{ color: accentColor, border: `1px solid ${accentColor}40` }}>
+                            AUTHORITY EDITION
+                          </div>
+                        </div>
+                      )}
+                      <h1 className="text-xl font-black leading-tight drop-shadow-md" style={{ color: titleColor, fontFamily }}>
+                        {titleText}
+                      </h1>
+                      <p className={`text-[11px] leading-snug opacity-90 max-w-[240px] drop-shadow-sm ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} style={{ color: subtitleColor }}>
+                        {subtitleText}
+                      </p>
+                    </div>
+                    <div className="flex-1" />
+                    <div className={`w-full border-t border-white/10 pt-3 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>
+                      <span className="text-xs font-bold tracking-wider" style={{ color: titleColor }}>
+                        {authorName}
+                      </span>
+                    </div>
+                  </>
+                ) : titlePosition === 'bottom' ? (
+                  <>
+                    <div className="w-full">
+                      {showBadge ? (
+                        <div className={titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}>
+                          <div className="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.2em]" style={{ color: accentColor, border: `1px solid ${accentColor}40` }}>
+                            AUTHORITY EDITION
+                          </div>
+                        </div>
+                      ) : <div className="h-3" />}
+                    </div>
+                    <div className="flex-1" />
+                    <div 
+                      className="w-full space-y-2 transition-transform duration-150"
+                      style={{ transform: `translateY(${titleOffsetY * 0.8}px)` }}
+                    >
+                      <h1 className="text-xl font-black leading-tight drop-shadow-lg" style={{ color: titleColor, fontFamily }}>
+                        {titleText}
+                      </h1>
+                      <p className={`text-[11px] leading-snug opacity-90 max-w-[240px] drop-shadow-md ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} style={{ color: subtitleColor }}>
+                        {subtitleText}
+                      </p>
+                      <div className={`border-t border-white/10 pt-2.5 mt-3 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>
+                        <span className="text-xs font-bold tracking-wider" style={{ color: titleColor }}>
+                          {authorName}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-full">
+                      {showBadge ? (
+                        <div className={titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}>
+                          <div className="inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-[0.2em]" style={{ color: accentColor, border: `1px solid ${accentColor}40` }}>
+                            AUTHORITY EDITION
+                          </div>
+                        </div>
+                      ) : <div className="h-3" />}
+                    </div>
 
-                <div className="space-y-2">
-                  <h1 className="text-xl font-black leading-tight" style={{ color: titleColor, fontFamily }}>
-                    {titleText}
-                  </h1>
-                  <p className="text-[11px] leading-snug opacity-90 max-w-[240px] mx-auto" style={{ color: subtitleColor }}>
-                    {subtitleText}
-                  </p>
-                </div>
+                    <div 
+                      className="w-full space-y-2 transition-transform duration-150"
+                      style={{ transform: `translateY(${titleOffsetY * 0.8}px)` }}
+                    >
+                      <h1 className="text-xl font-black leading-tight drop-shadow-md" style={{ color: titleColor, fontFamily }}>
+                        {titleText}
+                      </h1>
+                      <p className={`text-[11px] leading-snug opacity-90 max-w-[240px] drop-shadow-sm ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} style={{ color: subtitleColor }}>
+                        {subtitleText}
+                      </p>
+                    </div>
 
-                <div className="border-t border-white/10 pt-3">
-                  <span className="text-xs font-bold tracking-wider" style={{ color: titleColor }}>
-                    {authorName}
-                  </span>
-                </div>
+                    <div className={`w-full border-t border-white/10 pt-3 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>
+                      <span className="text-xs font-bold tracking-wider" style={{ color: titleColor }}>
+                        {authorName}
+                      </span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
