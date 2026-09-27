@@ -22,6 +22,8 @@ export interface Profile {
   subscription_tier: SubscriptionTier;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
+  polar_customer_id?: string | null;
+  polar_subscription_id?: string | null;
   created_at: string;
   updated_at: string;
 }

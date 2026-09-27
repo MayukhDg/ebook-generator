@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/lib/data/store';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -29,6 +31,21 @@ export async function PATCH(
       return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
     return NextResponse.json({ book: updatedBook });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const success = await store.deleteBook(params.id);
+    if (!success) {
+      return NextResponse.json({ error: 'Failed to delete book' }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

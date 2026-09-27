@@ -26,24 +26,27 @@ import {
   Brain,
   PenTool
 } from 'lucide-react';
-import { PRICING_PLANS, CREDIT_PACKS } from '@/lib/stripe/config';
+import { PRICING_PLANS, CREDIT_PACKS } from '@/lib/polar/config';
 
 export default function HomePage() {
   const [activeStep, setActiveStep] = useState<number>(1);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(0);
   const [isCheckoutLoading, setIsCheckoutLoading] = useState<string | null>(null);
 
-  const handleCheckout = async (planId: string) => {
-    setIsCheckoutLoading(planId);
+  const handleCheckout = async (itemId: string) => {
+    setIsCheckoutLoading(itemId);
     try {
+      const isPack = itemId.startsWith('topup_');
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify(isPack ? { packId: itemId } : { planId: itemId }),
       });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
+      } else if (data.error) {
+        alert(data.error);
       }
     } catch (err) {
       console.error('Checkout error:', err);

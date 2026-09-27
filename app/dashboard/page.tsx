@@ -223,16 +223,30 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Books Section */}
+        {/* Books Section (Last 4 Projects Only) */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-              <BookOpen className="h-5 w-5 text-orange-500" />
-              Your Authority Books
-            </h2>
-            <span className="text-xs text-gray-400">
-              {books.length} Books in Workspace
-            </span>
+            <div>
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-orange-500" />
+                Recent Projects
+              </h2>
+              <p className="text-xs text-gray-500">
+                {books.length > 0
+                  ? `Showing your last ${Math.min(4, books.length)} projects (${books.length} total in workspace)`
+                  : 'Your book creation workspace'
+                }
+              </p>
+            </div>
+            {books.length > 0 && (
+              <Link
+                href="/dashboard/books"
+                className="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3.5 py-1.5 text-xs font-bold text-orange-600 hover:bg-orange-100 hover:shadow-sm transition-all"
+              >
+                View All ({books.length})
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            )}
           </div>
 
           {/* ZERO DATA EMPTY STATE */}
@@ -282,64 +296,81 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* POPULATED BOOKS GRID */}
+          {/* POPULATED BOOKS GRID (LAST 4 PROJECTS ONLY) */}
           {books.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {books.map((b) => (
-                <div
-                  key={b.id}
-                  className="group relative rounded-3xl border border-gray-200/60 bg-white/80 backdrop-blur-sm p-6 transition-all hover:border-orange-200 hover:shadow-card-hover shadow-card flex flex-col justify-between"
-                >
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-[11px] font-semibold text-orange-600">
-                        {b.status.toUpperCase()}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {formatDate(b.updated_at)}
-                      </span>
-                    </div>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {books.slice(0, 4).map((b) => (
+                  <div
+                    key={b.id}
+                    className="group relative rounded-3xl border border-gray-200/60 bg-white/80 backdrop-blur-sm p-6 transition-all hover:border-orange-200 hover:shadow-card-hover shadow-card flex flex-col justify-between"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-[11px] font-semibold text-orange-600">
+                          {b.status.toUpperCase()}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {formatDate(b.updated_at)}
+                        </span>
+                      </div>
 
-                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
-                      {b.title}
-                    </h3>
-                    {b.subtitle && (
-                      <p className="text-xs text-gray-500 font-medium line-clamp-1">
-                        {b.subtitle}
+                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-orange-600 transition-colors">
+                        {b.title}
+                      </h3>
+                      {b.subtitle && (
+                        <p className="text-xs text-gray-500 font-medium line-clamp-1">
+                          {b.subtitle}
+                        </p>
+                      )}
+
+                      <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
+                        {b.core_thesis}
                       </p>
-                    )}
-
-                    <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
-                      {b.core_thesis}
-                    </p>
-                  </div>
-
-                  <div className="mt-6 border-t border-gray-100 pt-4 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <Link
-                        href={`/dashboard/books/${b.id}`}
-                        className="rounded-full bg-gradient-to-r from-orange-500 to-rose-500 px-3.5 py-1.5 text-xs font-bold text-white hover:shadow-md hover:shadow-orange-500/25 transition-all"
-                      >
-                        Studio Outline
-                      </Link>
-                      <Link
-                        href={`/dashboard/books/${b.id}/cover`}
-                        className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-medium text-gray-600 hover:text-orange-600 hover:border-orange-200 transition-all"
-                      >
-                        Cover Studio
-                      </Link>
                     </div>
 
-                    <a
-                      href={`/api/books/${b.id}/export/pdf`}
-                      download
-                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors"
-                    >
-                      <Printer className="h-3.5 w-3.5" /> PDF
-                    </a>
+                    <div className="mt-6 border-t border-gray-100 pt-4 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/dashboard/books/${b.id}`}
+                          className="rounded-full bg-gradient-to-r from-orange-500 to-rose-500 px-3.5 py-1.5 text-xs font-bold text-white hover:shadow-md hover:shadow-orange-500/25 transition-all"
+                        >
+                          Studio Outline
+                        </Link>
+                        <Link
+                          href={`/dashboard/books/${b.id}/cover`}
+                          className="rounded-full border border-gray-200 bg-white px-3.5 py-1.5 text-xs font-medium text-gray-600 hover:text-orange-600 hover:border-orange-200 transition-all"
+                        >
+                          Cover Studio
+                        </Link>
+                      </div>
+
+                      <a
+                        href={`/api/books/${b.id}/export/pdf`}
+                        download
+                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors"
+                      >
+                        <Printer className="h-3.5 w-3.5" /> PDF
+                      </a>
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              {books.length > 4 && (
+                <div className="rounded-2xl border border-dashed border-orange-200/80 bg-orange-50/40 p-4 text-center flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="text-left text-xs text-gray-600">
+                    <span className="font-semibold text-gray-900">Clean Workspace:</span> Showing your <strong>4 most recent projects</strong> out of <strong>{books.length} total books</strong>.
+                  </div>
+                  <Link
+                    href="/dashboard/books"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white border border-orange-200 px-4 py-2 text-xs font-bold text-orange-600 hover:bg-orange-50 transition-all shrink-0 shadow-sm"
+                  >
+                    View All {books.length} eBooks in Library
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>

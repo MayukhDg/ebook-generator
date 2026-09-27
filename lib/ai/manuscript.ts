@@ -1,3 +1,4 @@
+
 /**
  * FolioCraft AI - Chapter Manuscript Generator
  * Produces substantive, coherent, in-depth chapter manuscripts tailored
@@ -5,6 +6,7 @@
  */
 
 import OpenAI from 'openai';
+import { cleanHumanProse } from '@/lib/utils';
 
 export interface GenerateManuscriptParams {
   chapterNumber: number;
@@ -44,28 +46,26 @@ export async function generateChapterManuscript(params: GenerateManuscriptParams
 
       const termsList = Object.entries(terminology || {})
         .slice(0, 5)
-        .map(([k, v]) => `- **${k}**: ${v}`)
+        .map(([k, v]) => `- ${k}: ${v}`)
         .join('\n');
 
-      const systemPrompt = `You are an acclaimed author and biographer writing an Amazon KDP-grade book.
-Write a complete, compelling, in-depth chapter manuscript formatted in clean Markdown.
+      const systemPrompt = `You are a world-class author, biographer, and master storyteller writing an Amazon KDP-grade book.
+Write a complete, compelling, in-depth chapter manuscript.
 
-CRITICAL EDITORIAL REQUIREMENTS:
-1. 100% TOPIC COHERENCE: The entire chapter must strictly focus on the specified chapter topic, book title, and core thesis.
-2. NO UNRELATED JARGON: NEVER include generic corporate consulting frameworks, billing structures, client deliverable models, or Zoom call references unless the book is explicitly about enterprise consulting.
-${isBiographyOrHistory ? `3. NARRATIVE DEPTH: As this is a biographical/historical book, write vivid narrative prose, detailed historical context, key milestones, real figures, internal motivations, dramatic turning points, and reflective analysis.
-4. STRUCTURE:
-   - '# Chapter ${chapterNumber}: ${chapterTitle}'
-   - A compelling opening quote or epigraph setting the chapter's tone
-   - 3 to 4 detailed thematic subsections ('## Subsection Title') detailing specific events and insights
-   - Concrete stories and historical chronology
-   - A thoughtful concluding section connecting to the next phase of life or history.` : `3. SUBSTANTIVE STRUCTURE:
-   - '# Chapter ${chapterNumber}: ${chapterTitle}'
-   - An engaging opening hook and thematic overview
-   - 3 to 4 detailed subsections ('## Subsection Title') exploring core principles and applications
-   - Concrete real-world examples and analytical takeaways
-   - A concise conclusion and forward-looking synthesis.`}
-5. LENGTH & QUALITY: Write thoroughly and expansively (around 1,000 - 1,800 words) with rich prose and high intellectual/narrative substance.`;
+STRICT HUMAN-LIKE EDITORIAL & FORMATTING RULES:
+1. NATURAL HUMAN VOICE: The prose must be warm, conversational, authentic, and engaging. Write like a seasoned author having an intelligent, engrossing conversation with the reader. Eliminate robotic AI cadence, repetitive syntactic formulas, and corporate consulting jargon.
+2. NO UNNECESSARY "#" OR MARKDOWN HEADINGS:
+   - DO NOT start with "# Chapter ${chapterNumber}: ${chapterTitle}" (the reader header already displays the title). Start directly with the narrative opening or an inspiring quote.
+   - DO NOT use "#", "##", or "###" hash symbols. For section transitions, simply write a clean title on its own line without any leading hashes.
+3. NO ASTERISKS ("*" OR "**"):
+   - DO NOT wrap quotes or text in asterisks like *"quote"* or **bold**.
+   - Use standard clean quotation marks "like this" for quotes or dialogue.
+4. USE EM DASHES VERY SPARINGLY:
+   - Avoid AI overuse of em dashes ("—"). Use them at most once or twice in the entire chapter, or not at all.
+   - Use natural human punctuation: commas, periods, or clean conversational sentence splits.
+5. 100% TOPIC COHERENCE:
+   ${isBiographyOrHistory ? `Write vivid narrative prose, detailed historical context, key milestones, real figures, internal motivations, dramatic turning points, and reflective analysis.` : `Provide clear real-world examples, engaging insights, practical takeaways, and structured progression.`}
+6. LENGTH & QUALITY: Write thoroughly and expansively (around 1,000 - 1,800 words) with rich prose and high intellectual/narrative substance.`;
 
       const userPrompt = `Book Title: ${bookTitle}
 ${subtitle ? `Subtitle: ${subtitle}` : ''}
@@ -79,7 +79,7 @@ Chapter Number: ${chapterNumber}
 Chapter Title: ${chapterTitle}
 Chapter Focus / Summary: ${chapterSummary || 'In-depth exploration of this chapter theme.'}
 
-Write the complete chapter manuscript now in clean Markdown.`;
+Write the complete chapter manuscript now in clean, natural prose without unnecessary '#' or '*' symbols and using em dashes very sparingly.`;
 
       const response = await openai.chat.completions.create({
         model: 'gpt-4o-mini',
@@ -92,7 +92,7 @@ Write the complete chapter manuscript now in clean Markdown.`;
 
       const content = response.choices[0]?.message?.content?.trim();
       if (content && content.length > 200) {
-        return content;
+        return cleanHumanProse(content);
       }
     } catch (err) {
       console.warn(`OpenAI manuscript generation failed for chapter ${chapterNumber}, using topic-aware fallback:`, err);
@@ -100,7 +100,7 @@ Write the complete chapter manuscript now in clean Markdown.`;
   }
 
   // Fallback to topic-aware generator
-  return generateTopicAwareFallbackManuscript(params);
+  return cleanHumanProse(generateTopicAwareFallbackManuscript(params));
 }
 
 export function generateTopicAwareFallbackManuscript(params: GenerateManuscriptParams): string {

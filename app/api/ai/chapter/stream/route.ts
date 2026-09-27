@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { store } from '@/lib/data/store';
 import { generateTopicAwareFallbackManuscript } from '@/lib/ai/manuscript';
+import { cleanHumanProse } from '@/lib/utils';
 import OpenAI from 'openai';
 
 export async function POST(req: NextRequest) {
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
       .join('\n\n');
 
     const terminologyStr = Object.entries(book.global_context.terminology || {})
-      .map(([term, def]) => `- **${term}**: ${def}`)
+      .map(([term, def]) => `- ${term}: ${def}`)
       .join('\n');
 
     const rollingAbstractsStr = (book.global_context.rolling_abstracts || [])
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
       `${book.title} ${book.core_thesis} ${book.target_audience}`
     );
 
-    const systemPrompt = `You are a world-class author, biographer, and editorial director crafting an Amazon KDP-grade book.
+    const systemPrompt = `You are a world-class author, biographer, and master storyteller crafting an Amazon KDP-grade book.
 The book is: "${book.title}${book.subtitle ? `: ${book.subtitle}` : ''}"
 Tone & Voice: ${book.tone_voice}
 Target Audience: ${book.target_audience}
@@ -72,19 +73,27 @@ ${rollingAbstractsStr || previousChapters || 'This is Chapter 1.'}
 SOURCE MATERIALS & TRANSCRIPTS:
 ${sourceSnippets || 'No direct transcripts uploaded yet. Write authoritatively and richly.'}
 
-STRICT EDITORIAL RULES:
-1. Write in clear, compelling, professional markdown format starting with: # Chapter ${chapter.chapter_number}: ${chapter.title}
-2. 100% TOPIC RELEVANCE: The entire chapter must strictly focus on this specific chapter topic and the book's core premise.
-${isBiographyOrNarrative ? `3. NARRATIVE & HISTORICAL DEPTH: Write vivid narrative prose, detailed historical context, key figures, dramatic tensions, and reflective analysis.
-4. DO NOT use corporate business consulting frameworks, billing jargon, or client deliverable rubrics.
-5. Structure with 3-4 deep subsections (## Subheadings) detailing pivotal moments and analyses.` : `3. SUBSTANTIVE STRUCTURE: Structure with an engaging opening hook, 3-4 deep thematic subsections (## Subheadings), concrete examples, and clear takeaways.
-4. Avoid generic filler, corporate clichés, or hollow platitudes.`}
-5. Maintain strict continuity with previously established chapters.
-6. Write thoroughly (1,200 - 2,000 words of rich, substantive prose).`;
+STRICT HUMAN-LIKE EDITORIAL & FORMATTING RULES:
+1. NATURAL HUMAN VOICE: The writing must sound genuinely human, engaging, thoughtful, and conversational. Avoid stiff robotic AI structures, repetitive cadence, corporate consulting speak, or lecturing tones. Write as an experienced, articulate author speaking warmly and directly with the reader.
+2. NO UNNECESSARY "#" OR MARKDOWN HEADINGS:
+   - DO NOT start with "# Chapter ${chapter.chapter_number}: ${chapter.title}". The application already displays the chapter number and title in the reader interface. Start directly with the narrative opening or an opening quote.
+   - DO NOT use "#", "##", or "###" hash symbols. For section transitions, simply write a clean title on its own line without any leading hashes.
+3. NO ASTERISKS ("*" OR "**"):
+   - DO NOT wrap quotes or text in asterisks like *"quote"* or **bold**.
+   - Use standard clean quotation marks "like this" for quotes or dialogue.
+4. USE EM DASHES VERY SPARINGLY:
+   - Avoid AI overuse of em dashes ("—"). Use them at most once or twice in the entire chapter, or not at all.
+   - Use natural human punctuation: commas, periods, or clean conversational sentence splits.
+5. 100% TOPIC RELEVANCE:
+   ${isBiographyOrNarrative ? `Write vivid narrative prose, detailed historical context, key figures, dramatic tensions, and reflective analysis.` : `Provide concrete examples, engaging insights, practical takeaways, and structured progression.`}
+6. Maintain strict continuity with previously established chapters.
+7. Write thoroughly (1,200 - 2,000 words of rich, fluid, human prose).`;
 
     const userPrompt = `Write the complete, in-depth text for Chapter ${chapter.chapter_number}: "${chapter.title}".
 Chapter Intent / Summary: ${chapter.summary || 'Comprehensive breakdown of this topic.'}
-${customPrompt ? `Special author instruction: ${customPrompt}` : ''}`;
+${customPrompt ? `Special author instruction: ${customPrompt}` : ''}
+
+Write in natural, human, conversational prose without unnecessary '#' or '*' symbols and using em dashes very sparingly.`;
 
     const apiKey = process.env.OPENAI_API_KEY;
     const isRealKey = apiKey && !apiKey.includes('mock') && apiKey.startsWith('sk-');
@@ -114,9 +123,10 @@ ${customPrompt ? `Special author instruction: ${customPrompt}` : ''}`;
               }
             }
 
-            // Update chapter content and status in DB
+            // Update chapter content and status in DB with cleaned prose
+            const finalContent = cleanHumanProse(accumulatedText);
             await store.updateChapter(chapterId, {
-              content_markdown: accumulatedText,
+              content_markdown: finalContent,
               status: 'review',
             });
 

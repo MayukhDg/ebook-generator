@@ -7,7 +7,8 @@ import {
   CreditActionType,
   CoverStyleConfig,
   GlobalContext,
-  SourceMaterial
+  SourceMaterial,
+  SubscriptionTier
 } from '@/lib/types';
 import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase/server';
 
@@ -139,6 +140,39 @@ class ProductionDataStore {
     }
 
     return { success: true, newBalance: 150 };
+  }
+
+  async updateSubscriptionTier(
+    userId: string,
+    tier: SubscriptionTier,
+    customerId?: string,
+    subscriptionId?: string
+  ): Promise<boolean> {
+    if (this.isConfigured()) {
+      const adminClient = createAdminSupabaseClient();
+      const updateData: Record<string, any> = {
+        subscription_tier: tier,
+        updated_at: new Date().toISOString(),
+      };
+      if (customerId) {
+        updateData.stripe_customer_id = customerId;
+      }
+      if (subscriptionId) {
+        updateData.stripe_subscription_id = subscriptionId;
+      }
+
+      const { error } = await adminClient
+        .from('profiles')
+        .update(updateData)
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error updating subscription tier in profiles:', error);
+        return false;
+      }
+      return true;
+    }
+    return true;
   }
 
   // ---------------------------------------------------------------------------
@@ -306,6 +340,21 @@ class ProductionDataStore {
     return null;
   }
 
+  async deleteBook(id: string): Promise<boolean> {
+    if (this.isConfigured()) {
+      const admin = createAdminSupabaseClient();
+      // First delete associated chapters
+      await admin.from('chapters').delete().eq('book_id', id);
+      const { error } = await admin.from('books').delete().eq('id', id);
+      if (error) {
+        console.error('Error deleting book in store:', error);
+        return false;
+      }
+      return true;
+    }
+    return true;
+  }
+
   async addSourceMaterial(bookId: string, material: SourceMaterial): Promise<Book | null> {
     const book = await this.getBookById(bookId);
     if (!book) return null;
@@ -345,11 +394,21 @@ class ProductionDataStore {
   async getChapterById(chapterId: string): Promise<Chapter | null> {
     if (this.isConfigured()) {
       const supabase = createServerSupabaseClient();
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('chapters')
         .select('*')
         .eq('id', chapterId)
         .single();
+
+      if (!data && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const admin = createAdminSupabaseClient();
+        const adminRes = await admin
+          .from('chapters')
+          .select('*')
+          .eq('id', chapterId)
+          .single();
+        data = adminRes.data;
+      }
 
       if (data) return data as Chapter;
       return null;
@@ -372,11 +431,21 @@ class ProductionDataStore {
 
     if (this.isConfigured()) {
       const supabase = createServerSupabaseClient();
-      const { data: inserted, error } = await supabase
+      let { data: inserted, error } = await supabase
         .from('chapters')
         .insert(payload)
         .select()
         .single();
+
+      if (!inserted && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const admin = createAdminSupabaseClient();
+        const adminRes = await admin
+          .from('chapters')
+          .insert(payload)
+          .select()
+          .single();
+        inserted = adminRes.data;
+      }
 
       if (inserted) return inserted as Chapter;
     }
@@ -402,12 +471,23 @@ class ProductionDataStore {
 
     if (this.isConfigured()) {
       const supabase = createServerSupabaseClient();
-      const { data, error } = await supabase
+      let { data, error } = await supabase
         .from('chapters')
         .update(payload)
         .eq('id', id)
         .select()
         .single();
+
+      if (!data && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const admin = createAdminSupabaseClient();
+        const adminRes = await admin
+          .from('chapters')
+          .update(payload)
+          .eq('id', id)
+          .select()
+          .single();
+        data = adminRes.data;
+      }
 
       if (data) return data as Chapter;
       return null;
@@ -417,16 +497,26 @@ class ProductionDataStore {
   }
 
   // ---------------------------------------------------------------------------
-  // Blog Posts (Public Publications)
+  // Blog Posts (Public Publications & Admin CMS)
   // ---------------------------------------------------------------------------
   async getBlogPosts(publishedOnly = true): Promise<BlogPost[]> {
     if (this.isConfigured()) {
-      const supabase = createServerSupabaseClient();
+      const supabase = publishedOnly ? createServerSupabaseClient() : createAdminSupabaseClient();
       let query = supabase.from('blog_posts').select('*').order('published_at', { ascending: false });
       if (publishedOnly) {
         query = query.eq('is_published', true);
       }
       const { data, error } = await query;
+      if (error && publishedOnly) {
+        // Fallback to admin client if RLS blocked anon
+        const adminSupabase = createAdminSupabaseClient();
+        const { data: adminData } = await adminSupabase
+          .from('blog_posts')
+          .select('*')
+          .eq('is_published', true)
+          .order('published_at', { ascending: false });
+        if (adminData && adminData.length > 0) return adminData as BlogPost[];
+      }
       if (data && data.length > 0) return data as BlogPost[];
     }
 
@@ -435,12 +525,27 @@ class ProductionDataStore {
 
   async getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
     if (this.isConfigured()) {
-      const supabase = createServerSupabaseClient();
+      const supabase = createAdminSupabaseClient();
       const { data, error } = await supabase
         .from('blog_posts')
         .select('*')
         .eq('slug', slug)
-        .single();
+        .maybeSingle();
+
+      if (data) return data as BlogPost;
+    }
+
+    return null;
+  }
+
+  async getBlogPostById(id: string): Promise<BlogPost | null> {
+    if (this.isConfigured()) {
+      const supabase = createAdminSupabaseClient();
+      const { data, error } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
 
       if (data) return data as BlogPost;
     }
@@ -450,29 +555,126 @@ class ProductionDataStore {
 
   async createBlogPost(data: Partial<BlogPost>): Promise<BlogPost> {
     if (this.isConfigured()) {
-      const supabase = createServerSupabaseClient();
+      const supabase = createAdminSupabaseClient();
+
+      const title = (data.title || '').trim();
+      if (!title) {
+        throw new Error('Article title is required.');
+      }
+
+      const contentMarkdown = (data.content_markdown || '').trim();
+      if (!contentMarkdown) {
+        throw new Error('Markdown body content is required.');
+      }
+
+      let slug = (data.slug || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+      if (!slug) {
+        slug = title.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+      }
+
+      const metaDescription = (data.meta_description || '').trim() || title;
+
+      const validStages = ['awareness', 'consideration', 'purchase'];
+      const funnelStage = validStages.includes(data.funnel_stage || '') ? data.funnel_stage : 'awareness';
+
+      const keywords = Array.isArray(data.target_keywords)
+        ? data.target_keywords.map((k) => String(k).trim()).filter(Boolean)
+        : typeof data.target_keywords === 'string'
+        ? (data.target_keywords as string).split(',').map((k) => k.trim()).filter(Boolean)
+        : [];
+
+      const schemaJson = (data.schema_json && typeof data.schema_json === 'object')
+        ? data.schema_json
+        : { '@context': 'https://schema.org', '@type': 'Article', headline: title };
+
+      const payload = {
+        title,
+        slug,
+        meta_description: metaDescription,
+        content_markdown: contentMarkdown,
+        funnel_stage: funnelStage,
+        canonical_url: data.canonical_url?.trim() || null,
+        target_keywords: keywords,
+        schema_json: schemaJson,
+        is_published: data.is_published ?? true,
+        published_at: data.published_at || new Date().toISOString(),
+      };
+
       const { data: inserted, error } = await supabase
         .from('blog_posts')
-        .insert(data)
+        .insert(payload)
         .select()
         .single();
+
+      if (error) {
+        console.error('Error creating blog post in Supabase:', error);
+        throw new Error(error.message);
+      }
 
       if (inserted) return inserted as BlogPost;
     }
 
-    return {
-      id: `blog-${Date.now()}`,
-      slug: data.slug || `post-${Date.now()}`,
-      title: data.title || 'Untitled Post',
-      meta_description: data.meta_description || '',
-      content_markdown: data.content_markdown || '',
-      funnel_stage: data.funnel_stage || 'awareness',
-      canonical_url: data.canonical_url || null,
-      target_keywords: data.target_keywords || [],
-      schema_json: data.schema_json || {},
-      is_published: data.is_published ?? true,
-      published_at: new Date().toISOString(),
-    } as BlogPost;
+    throw new Error('Database is not configured.');
+  }
+
+  async updateBlogPost(id: string, data: Partial<BlogPost>): Promise<BlogPost> {
+    if (this.isConfigured()) {
+      const supabase = createAdminSupabaseClient();
+      const updates: any = {};
+      if (data.title !== undefined) updates.title = data.title.trim();
+      if (data.slug !== undefined) {
+        updates.slug = data.slug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+      }
+      if (data.meta_description !== undefined) updates.meta_description = data.meta_description.trim();
+      if (data.content_markdown !== undefined) updates.content_markdown = data.content_markdown;
+      if (data.funnel_stage !== undefined) updates.funnel_stage = data.funnel_stage;
+      if (data.canonical_url !== undefined) updates.canonical_url = data.canonical_url?.trim() || null;
+      if (data.target_keywords !== undefined) {
+        updates.target_keywords = Array.isArray(data.target_keywords)
+          ? data.target_keywords.map((k) => String(k).trim()).filter(Boolean)
+          : [];
+      }
+      if (data.schema_json !== undefined) updates.schema_json = data.schema_json;
+      if (data.is_published !== undefined) updates.is_published = data.is_published;
+
+      const { data: updated, error } = await supabase
+        .from('blog_posts')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating blog post in Supabase:', error);
+        throw new Error(error.message);
+      }
+
+      return updated as BlogPost;
+    }
+    throw new Error('Database is not configured.');
+  }
+
+  async deleteBlogPost(id: string): Promise<boolean> {
+    if (this.isConfigured()) {
+      const supabase = createAdminSupabaseClient();
+      const { error } = await supabase
+        .from('blog_posts')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting blog post in Supabase:', error);
+        throw new Error(error.message);
+      }
+
+      return true;
+    }
+    return false;
   }
 }
 
