@@ -67,6 +67,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Fetch and merge source materials if bookId is provided
+    let allSources = Array.isArray(sourceMaterials) ? [...sourceMaterials] : [];
+    if (bookId) {
+      const existingBook = await store.getBookById(bookId);
+      if (existingBook?.source_materials?.length) {
+        const existingIds = new Set(allSources.map((s: any) => s.id));
+        for (const mat of existingBook.source_materials) {
+          if (!existingIds.has(mat.id)) {
+            allSources.push(mat);
+            existingIds.add(mat.id);
+          }
+        }
+      }
+    }
+
+    const sourcesFormatted = allSources.length > 0
+      ? allSources.map((s: any, i: number) => `[Source Material #${i + 1} - "${s.title}" (${s.type})]:\n${s.snippet.slice(0, 3000)}`).join('\n\n---\n\n')
+      : '';
+
     let generatedOutline: {
       chapters: Array<{ chapter_number: number; title: string; summary: string }>;
       terminology: Record<string, string>;
@@ -87,11 +106,12 @@ export async function POST(req: NextRequest) {
               role: 'system',
               content: `You are an elite ghostwriter, biographer, and publishing strategist across all genres (biography, memoir, history, politics, business, technology, self-help, philosophy, and creative non-fiction).
 Your goal is to build an authoritative, engaging, and deeply coherent chapter-by-chapter book blueprint designed for publication success.
-Analyze the user's title, subtitle, target audience, and core thesis carefully.
+Analyze the user's title, subtitle, target audience, core thesis, and any attached source materials carefully.
 Structure the book into EXACTLY ${targetChapterCount} high-impact, sequential chapters tailored precisely to the subject matter.
 
 CRITICAL RULES:
 - The chapters must be 100% relevant and coherent to the requested topic.
+- PROPRIETARY SOURCE SYNTHESIS: If the user provided voice notes, transcripts, or documents, you MUST weave their frameworks, terminology, case studies, and anecdotes directly into the chapter titles, summaries, and coined terms.
 - If the book is a biography, political history, or personal journey (e.g., about Donald Trump), structure the chapters chronologically and thematically around real events, life stages, conflicts, and milestones as requested in the core thesis.
 - NEVER force corporate consulting jargon, billing frameworks, or client deliverable models unless the book is explicitly about consulting.
 - The 'terminology' field should contain 3-5 pivotal concepts, themes, key terms, or recurring motifs specific to this book topic and their meaningful definitions in this context.
@@ -119,7 +139,8 @@ Target Audience: ${targetAudience}
 Core Thesis / Narrative Arc: ${coreThesis}
 Tone & Voice: ${toneVoice || 'Authoritative & Practical'}
 Exact Number of Chapters Required: ${targetChapterCount}
-Source Materials Count: ${Array.isArray(sourceMaterials) ? sourceMaterials.length : 0}`,
+
+${sourcesFormatted ? `AUTHOR'S PROPRIETARY SOURCE MATERIALS (VOICE NOTES & DOCUMENTS):\n${sourcesFormatted}\n\nCRITICAL MANDATE: Derive chapter arcs, coined frameworks, and topics directly from these source materials.` : 'No external source transcripts provided.'}`,
             },
           ],
         });
@@ -155,6 +176,7 @@ Source Materials Count: ${Array.isArray(sourceMaterials) ? sourceMaterials.lengt
         core_thesis: coreThesis,
         tone_voice: toneVoice || 'Authoritative & Practical',
         global_context: globalContext,
+        source_materials: allSources,
       });
 
       // Clear pending chapters and insert newly generated outline WITH full initial manuscripts!
@@ -173,6 +195,7 @@ Source Materials Count: ${Array.isArray(sourceMaterials) ? sourceMaterials.lengt
             coreThesis,
             toneVoice,
             terminology: generatedOutline.terminology,
+            sourceMaterials: allSources,
           });
 
           const words = contentMarkdown.trim().split(/\s+/).length;

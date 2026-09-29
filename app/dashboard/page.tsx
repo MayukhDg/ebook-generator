@@ -22,9 +22,10 @@ import {
   Mic,
   ArrowRight,
   BookMarked,
-  ImageIcon
+  ImageIcon,
+  Upload
 } from 'lucide-react';
-import { Book, Profile, CreditTransaction } from '@/lib/types';
+import { Book, Profile, CreditTransaction, SourceMaterial } from '@/lib/types';
 import { formatNumber, formatDate } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 
@@ -44,11 +45,39 @@ export default function DashboardPage() {
   const [newTone, setNewTone] = useState('Authoritative & Practical');
   const [newChapterCount, setNewChapterCount] = useState<number | string>(10);
   const [newCoverVision, setNewCoverVision] = useState('');
+  const [wizardSources, setWizardSources] = useState<SourceMaterial[]>([]);
+  const [isIngestingSource, setIsIngestingSource] = useState(false);
+  const [ingestStatus, setIngestStatus] = useState('');
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [paymentSuccessMsg, setPaymentSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadDashboardData() {
       try {
+        // Sync any recent Polar checkout when returning with success query param
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search);
+          if (params.get('payment') === 'success' || params.get('checkout_id')) {
+            try {
+              const syncRes = await fetch('/api/checkout/sync', { method: 'POST' });
+              if (syncRes.ok) {
+                const syncData = await syncRes.json();
+                if (syncData.newlyCredited > 0) {
+                  setPaymentSuccessMsg(`Success! ${syncData.newlyCredited} credits have been added to your balance.`);
+                } else if (syncData.newPlan) {
+                  setPaymentSuccessMsg(`Success! You have been upgraded to the ${syncData.newPlan} plan.`);
+                } else {
+                  setPaymentSuccessMsg('Payment confirmed! Your account is up to date.');
+                }
+              }
+            } catch (syncErr) {
+              console.error('Error syncing checkout on return:', syncErr);
+            } finally {
+              window.history.replaceState({}, '', '/dashboard');
+            }
+          }
+        }
+
         const [booksRes, profileRes] = await Promise.all([
           fetch('/api/books'),
           fetch('/api/profile'),
@@ -73,6 +102,46 @@ export default function DashboardPage() {
     loadDashboardData();
   }, []);
 
+  const handleWizardSourceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsIngestingSource(true);
+    setSubmitError(null);
+    try {
+      const isAudio = file.type.startsWith('audio/') || /\.(mp3|wav|m4a|webm|ogg)$/i.test(file.name);
+      const isDoc = file.type === 'application/pdf' || /\.(pdf|txt|md)$/i.test(file.name);
+
+      if (!isAudio && !isDoc) {
+        throw new Error('Please select an audio file (MP3, WAV, M4A) or a document (PDF, TXT, MD).');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', file.name);
+
+      if (isAudio) {
+        setIngestStatus(`Transcribing "${file.name}" with Whisper AI (3 credits)...`);
+        const res = await fetch('/api/ai/transcribe', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to transcribe audio');
+        setWizardSources((prev) => [...prev, data.material]);
+      } else {
+        setIngestStatus(`Indexing "${file.name}" document (2 credits)...`);
+        const res = await fetch('/api/ai/documents/ingest', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to parse document');
+        setWizardSources((prev) => [...prev, data.material]);
+      }
+    } catch (err: any) {
+      setSubmitError(err.message || 'Failed to process source file');
+    } finally {
+      setIsIngestingSource(false);
+      setIngestStatus('');
+      e.target.value = '';
+    }
+  };
+
   const handleCreateBook = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle || !newAudience || !newThesis) return;
@@ -93,6 +162,7 @@ export default function DashboardPage() {
           core_thesis: newThesis,
           tone_voice: newTone,
           share_slug: newTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          source_materials: wizardSources,
         }),
       });
 
@@ -113,6 +183,7 @@ export default function DashboardPage() {
           coreThesis: newThesis,
           toneVoice: newTone,
           chapterCount: parsedChapterCount,
+          sourceMaterials: wizardSources,
         }),
       });
 
@@ -150,6 +221,26 @@ export default function DashboardPage() {
       <Navbar />
 
       <main className="flex-1 mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+        {paymentSuccessMsg && (
+          <div className="flex items-center justify-between rounded-2xl border border-emerald-200 bg-emerald-50/90 p-4 text-emerald-900 shadow-sm backdrop-blur-sm animate-fade-in">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-emerald-900">Payment Processed Successfully</p>
+                <p className="text-xs text-emerald-700">{paymentSuccessMsg}</p>
+              </div>
+            </div>
+            <button
+              onClick={() => setPaymentSuccessMsg(null)}
+              className="rounded-lg p-1.5 text-emerald-600 hover:bg-emerald-100/60"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
         {/* Dashboard Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200/60 pb-6">
           <div>
@@ -378,8 +469,8 @@ export default function DashboardPage() {
 
       {/* New Book Creation Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-md">
-          <div className="w-full max-w-xl rounded-3xl border border-gray-100 bg-white p-6 sm:p-8 shadow-2xl shadow-gray-300/30 space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-xl rounded-3xl border border-gray-100 bg-white p-6 sm:p-8 shadow-2xl shadow-gray-300/30 space-y-6 max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-start justify-between border-b border-gray-100 pb-4">
               <div>
                 <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -422,7 +513,7 @@ export default function DashboardPage() {
 
               <div>
                 <label className="font-semibold text-gray-600 block mb-1">
-                  Subtitle
+                  Subtitle <span className="text-gray-400 font-normal text-xs">(Optional)</span>
                 </label>
                 <input
                   type="text"
@@ -556,6 +647,70 @@ export default function DashboardPage() {
                 <p className="text-[11px] text-gray-400">
                   Describe how your cover should look. If provided, DALL-E 3 will auto-generate the cover background on book creation.
                 </p>
+              </div>
+
+              {/* Voice Notes & Document Ingestion Section */}
+              <div className="rounded-xl border border-gray-200 bg-gray-50/70 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Mic className="h-4 w-4 text-orange-500" />
+                    <label className="font-semibold text-gray-700 block text-xs">
+                      Voice Notes & Source Documents
+                      <span className="font-normal text-gray-400 ml-1">(Optional)</span>
+                    </label>
+                  </div>
+                  <span className="text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-full px-2 py-0.5 font-medium">
+                    AI Memory Injected
+                  </span>
+                </div>
+
+                <p className="text-[11px] text-gray-500">
+                  Attach spoken voice memos (Whisper AI) or PDF documents. The AI will derive chapter titles and weave your real voice, numbers, and case studies into every chapter.
+                </p>
+
+                {/* Attached Pills */}
+                {wizardSources.length > 0 && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {wizardSources.map((s, idx) => (
+                      <div key={s.id || idx} className="flex items-center gap-1.5 rounded-lg border border-orange-200 bg-white px-2.5 py-1 text-xs text-gray-700 shadow-sm">
+                        {s.type === 'audio_transcript' ? (
+                          <Mic className="h-3 w-3 text-orange-500 shrink-0" />
+                        ) : (
+                          <FileText className="h-3 w-3 text-rose-500 shrink-0" />
+                        )}
+                        <span className="truncate max-w-[180px] font-medium">{s.title}</span>
+                        <button
+                          type="button"
+                          onClick={() => setWizardSources(prev => prev.filter((_, i) => i !== idx))}
+                          className="text-gray-400 hover:text-gray-600 ml-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Ingestion Loader */}
+                {isIngestingSource && (
+                  <div className="flex items-center gap-2 text-xs text-orange-600 bg-orange-50 border border-orange-200 rounded-lg p-2.5">
+                    <Sparkles className="h-4 w-4 animate-spin text-orange-500" />
+                    <span>{ingestStatus || 'Processing source file...'}</span>
+                  </div>
+                )}
+
+                {/* Add Source Input */}
+                <label className="flex items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-white p-3 text-xs text-gray-600 hover:border-orange-400 hover:text-orange-600 cursor-pointer transition-all">
+                  <Upload className="h-4 w-4" />
+                  <span>Attach Voice Memo (.mp3, .m4a, .wav) or Document (.pdf, .txt)</span>
+                  <input
+                    type="file"
+                    className="hidden"
+                    disabled={isIngestingSource}
+                    accept="audio/*,.mp3,.wav,.m4a,.webm,.pdf,.txt,.md"
+                    onChange={handleWizardSourceUpload}
+                  />
+                </label>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">

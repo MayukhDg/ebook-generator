@@ -10,6 +10,7 @@ export type CreditActionType =
   | 'chapter_generation'
   | 'chapter_revision'
   | 'audio_transcription'
+  | 'document_ingestion'
   | 'cover_generation'
   | 'illustration_generation'
   | 'credit_purchase';
@@ -47,9 +48,12 @@ export interface CoverStyleConfig {
 export interface SourceMaterial {
   id: string;
   title: string;
-  type: 'audio_transcript' | 'text_note' | 'framework' | 'case_study';
+  type: 'audio_transcript' | 'document' | 'pdf' | 'text_note' | 'framework' | 'case_study';
   snippet: string;
   created_at?: string;
+  file_name?: string;
+  file_size?: number;
+  page_count?: number;
 }
 
 export interface GlobalContext {

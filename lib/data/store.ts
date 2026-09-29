@@ -82,12 +82,31 @@ class ProductionDataStore {
 
     if (this.isConfigured()) {
       const supabase = createServerSupabaseClient();
+      
+      const allowedActions = new Set([
+        'signup_bonus',
+        'subscription_grant',
+        'blueprint_generation',
+        'chapter_generation',
+        'chapter_revision',
+        'audio_transcription',
+        'cover_generation',
+        'illustration_generation',
+        'credit_purchase',
+      ]);
+
+      const safeAction = allowedActions.has(action) ? action : 'chapter_revision';
+      const safeMetadata = { ...metadata };
+      if (safeAction !== action) {
+        safeMetadata.requested_action = action;
+      }
+
       // Call PostgreSQL atomic row-locking function
       const { data, error } = await supabase.rpc('deduct_user_credits', {
         p_user_id: userId,
         p_cost: cost,
-        p_action: action,
-        p_metadata: metadata,
+        p_action: safeAction,
+        p_metadata: safeMetadata,
       });
 
       if (error) {
@@ -127,19 +146,52 @@ class ProductionDataStore {
         })
         .eq('id', userId);
 
+      const allowedActions = new Set([
+        'signup_bonus',
+        'subscription_grant',
+        'blueprint_generation',
+        'chapter_generation',
+        'chapter_revision',
+        'audio_transcription',
+        'cover_generation',
+        'illustration_generation',
+        'credit_purchase',
+      ]);
+
+      const safeAction = allowedActions.has(action) ? action : 'credit_purchase';
+      const safeMetadata = { ...metadata };
+      if (safeAction !== action) {
+        safeMetadata.requested_action = action;
+      }
+
       await adminClient
         .from('credit_transactions')
         .insert({
           user_id: userId,
           amount,
-          action_type: action,
-          metadata,
+          action_type: safeAction,
+          metadata: safeMetadata,
         });
 
       return { success: true, newBalance };
     }
 
     return { success: true, newBalance: 150 };
+  }
+
+  async getCreditTransactions(userId: string): Promise<any[]> {
+    if (this.isConfigured()) {
+      const adminClient = createAdminSupabaseClient();
+      const { data } = await adminClient
+        .from('credit_transactions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (data) return data;
+      return [];
+    }
+    return [];
   }
 
   async updateSubscriptionTier(
@@ -358,8 +410,21 @@ class ProductionDataStore {
   async addSourceMaterial(bookId: string, material: SourceMaterial): Promise<Book | null> {
     const book = await this.getBookById(bookId);
     if (!book) return null;
-    const updatedMaterials = [...(book.source_materials || []), material];
-    return this.updateBook(bookId, { source_materials: updatedMaterials });
+    const existing = Array.isArray(book.source_materials) ? [...book.source_materials] : [];
+    const idx = existing.findIndex((m) => m.id === material.id);
+    if (idx >= 0) {
+      existing[idx] = material;
+    } else {
+      existing.push(material);
+    }
+    return this.updateBook(bookId, { source_materials: existing });
+  }
+
+  async deleteSourceMaterial(bookId: string, materialId: string): Promise<Book | null> {
+    const book = await this.getBookById(bookId);
+    if (!book) return null;
+    const filtered = (book.source_materials || []).filter((m) => m.id !== materialId);
+    return this.updateBook(bookId, { source_materials: filtered });
   }
 
   // ---------------------------------------------------------------------------

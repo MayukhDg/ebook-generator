@@ -7,6 +7,7 @@
 
 import OpenAI from 'openai';
 import { cleanHumanProse } from '@/lib/utils';
+import { SourceMaterial } from '@/lib/types';
 
 export interface GenerateManuscriptParams {
   chapterNumber: number;
@@ -18,6 +19,7 @@ export interface GenerateManuscriptParams {
   coreThesis: string;
   toneVoice?: string;
   terminology?: Record<string, string>;
+  sourceMaterials?: SourceMaterial[];
 }
 
 export async function generateChapterManuscript(params: GenerateManuscriptParams): Promise<string> {
@@ -31,6 +33,7 @@ export async function generateChapterManuscript(params: GenerateManuscriptParams
     coreThesis,
     toneVoice = 'Authoritative & Practical',
     terminology = {},
+    sourceMaterials = [],
   } = params;
 
   const apiKey = process.env.OPENAI_API_KEY;
@@ -49,6 +52,10 @@ export async function generateChapterManuscript(params: GenerateManuscriptParams
         .map(([k, v]) => `- ${k}: ${v}`)
         .join('\n');
 
+      const sourcesList = (sourceMaterials || [])
+        .map((s, idx) => `[Source #${idx + 1}: "${s.title}" (${s.type})]:\n${s.snippet.slice(0, 2500)}`)
+        .join('\n\n---\n\n');
+
       const systemPrompt = `You are a world-class author, biographer, and master storyteller writing an Amazon KDP-grade book.
 Write a complete, compelling, in-depth chapter manuscript.
 
@@ -65,7 +72,9 @@ STRICT HUMAN-LIKE EDITORIAL & FORMATTING RULES:
    - Use natural human punctuation: commas, periods, or clean conversational sentence splits.
 5. 100% TOPIC COHERENCE:
    ${isBiographyOrHistory ? `Write vivid narrative prose, detailed historical context, key milestones, real figures, internal motivations, dramatic turning points, and reflective analysis.` : `Provide clear real-world examples, engaging insights, practical takeaways, and structured progression.`}
-6. LENGTH & QUALITY: Write thoroughly and expansively (around 1,000 - 1,800 words) with rich prose and high intellectual/narrative substance.`;
+6. ACTIVE SOURCE MATERIAL INGESTION:
+   ${sourcesList ? `The author has provided real voice notes, interview recordings, or source documents. You MUST actively anchor this chapter in these materials: quote the author's spoken philosophies, cite their frameworks, weave in their real-world examples, and preserve their authentic voice.` : `Deliver deep narrative value and authority.`}
+7. LENGTH & QUALITY: Write thoroughly and expansively (around 1,000 - 1,800 words) with rich prose and high intellectual/narrative substance.`;
 
       const userPrompt = `Book Title: ${bookTitle}
 ${subtitle ? `Subtitle: ${subtitle}` : ''}
@@ -73,6 +82,8 @@ Target Audience: ${targetAudience}
 Core Thesis / Narrative Arc: ${coreThesis}
 Editorial Tone: ${toneVoice}
 ${termsList ? `Key Themes & Concepts:\n${termsList}` : ''}
+
+${sourcesList ? `AUTHOR'S PROPRIETARY SOURCE MATERIALS (VOICE NOTES & DOCUMENTS):\n${sourcesList}\n\nCRITICAL: Weave the author's real insights, quotes, and systems from above into this chapter manuscript.\n` : ''}
 
 CURRENT CHAPTER:
 Chapter Number: ${chapterNumber}
@@ -113,6 +124,7 @@ export function generateTopicAwareFallbackManuscript(params: GenerateManuscriptP
     targetAudience,
     coreThesis,
     terminology = {},
+    sourceMaterials = [],
   } = params;
 
   const combinedContext = `${bookTitle} ${subtitle || ''} ${coreThesis} ${targetAudience}`.toLowerCase();
@@ -121,6 +133,9 @@ export function generateTopicAwareFallbackManuscript(params: GenerateManuscriptP
   const cleanSummary = chapterSummary?.trim() || `An in-depth examination of ${chapterTitle}.`;
   const termEntries = Object.entries(terminology);
   const featuredTerm = termEntries.length > 0 ? termEntries[(chapterNumber - 1) % termEntries.length] : null;
+  const featuredSource = (sourceMaterials && sourceMaterials.length > 0)
+    ? sourceMaterials[(chapterNumber - 1) % sourceMaterials.length]
+    : null;
 
   if (isBiography) {
     return `# Chapter ${chapterNumber}: ${chapterTitle}
@@ -218,7 +233,10 @@ To master this subject, we must isolate its core mechanisms:
 
 ## 2. In-Depth Analysis and Application
 
-When examining why conventional approaches fall short, the root issue is rarely lack of effort—it is the absence of a coherent, unified approach.
+${featuredSource ? `### Ingestion Anchor: Insights from Author Source Materials ("${featuredSource.title}")
+> "${featuredSource.snippet.slice(0, 300)}..."
+
+The core methodology detailed above serves as the foundational operating anchor for this chapter. Rather than relying on generic truisms, the decisions outlined here directly operationalize the frameworks captured in these source transcripts.` : `When examining why conventional approaches fall short, the root issue is rarely lack of effort—it is the absence of a coherent, unified approach.`}
 
 By identifying the pivotal turning points and focusing resources where they generate the highest leverage, progress shifts from unpredictable effort to deliberate, compounding momentum.
 

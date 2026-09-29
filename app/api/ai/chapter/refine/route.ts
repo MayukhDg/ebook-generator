@@ -62,6 +62,11 @@ export async function POST(req: NextRequest) {
         break;
     }
 
+    const book = await store.getBookById(chapter.book_id);
+    const sourcesSummary = (book?.source_materials || [])
+      .map((s, i) => `[Source #${i + 1} - "${s.title}"]: ${s.snippet.slice(0, 1500)}`)
+      .join('\n\n');
+
     let refinedContent = '';
     const apiKey = process.env.OPENAI_API_KEY;
     const isRealKey = apiKey && !apiKey.includes('mock') && apiKey.startsWith('sk-');
@@ -69,15 +74,15 @@ export async function POST(req: NextRequest) {
     if (isRealKey) {
       const openai = new OpenAI({ apiKey });
       const prompt = selectedText
-        ? `Here is the full chapter:\n\n${currentContent}\n\nApply this targeted editorial revision strictly to this highlighted excerpt:\n"${selectedText}"\n\nInstruction: ${instruction}\n\nSTRICT RULES: Keep prose completely human and conversational. Do NOT use unnecessary "#" or "##" hash symbols. Do NOT use "*" or "**" asterisks for quotes or emphasis. Use em dashes ("—") very sparingly. Return the complete updated chapter.`
-        : `Here is the full chapter:\n\n${currentContent}\n\nApply this editorial refinement to the chapter:\nInstruction: ${instruction}\n\nSTRICT RULES: Keep prose completely human and conversational. Do NOT use unnecessary "#" or "##" hash symbols. Do NOT use "*" or "**" asterisks for quotes or emphasis. Use em dashes ("—") very sparingly. Return the complete updated chapter.`;
+        ? `Here is the full chapter:\n\n${currentContent}\n\n${sourcesSummary ? `AUTHOR SOURCE MATERIALS (VOICE NOTES & DOCUMENTS):\n${sourcesSummary}\n\n` : ''}Apply this targeted editorial revision strictly to this highlighted excerpt:\n"${selectedText}"\n\nInstruction: ${instruction}\n\nSTRICT RULES: Keep prose completely human and conversational. Do NOT use unnecessary "#" or "##" hash symbols. Do NOT use "*" or "**" asterisks for quotes or emphasis. Use em dashes ("—") very sparingly. Return the complete updated chapter.`
+        : `Here is the full chapter:\n\n${currentContent}\n\n${sourcesSummary ? `AUTHOR SOURCE MATERIALS (VOICE NOTES & DOCUMENTS):\n${sourcesSummary}\n\n` : ''}Apply this editorial refinement to the chapter:\nInstruction: ${instruction}\n\nSTRICT RULES: Keep prose completely human and conversational. Do NOT use unnecessary "#" or "##" hash symbols. Do NOT use "*" or "**" asterisks for quotes or emphasis. Use em dashes ("—") very sparingly. Return the complete updated chapter.`;
 
       const response = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
           {
             role: 'system',
-            content: 'You are an elite publishing editor and master biographer. Refine the chapter text according to instructions into natural, engaging, human, conversational prose. Strictly avoid unnecessary "#" or "*" symbols, and use em dashes very sparingly. Never use corporate consulting jargon.',
+            content: 'You are an elite publishing editor and master biographer. Refine the chapter text according to instructions into natural, engaging, human, conversational prose. Weave in authentic quotes and details from author source materials where relevant. Strictly avoid unnecessary "#" or "*" symbols, and use em dashes very sparingly. Never use corporate consulting jargon.',
           },
           { role: 'user', content: prompt },
         ],

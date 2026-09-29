@@ -16,19 +16,53 @@ function resolveProductType(productId?: string | null): { planId?: string; packI
   return {};
 }
 
+function getWebhookSecret(): string {
+  // Check .env.local dynamically in case the user edited the secret without restarting the Next.js dev server
+  try {
+    const fs = require('fs');
+    if (fs.existsSync('.env.local')) {
+      const content = fs.readFileSync('.env.local', 'utf8');
+      for (const line of content.split(/\r?\n/)) {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('POLAR_WEBHOOK_SECRET=') && !trimmed.startsWith('#')) {
+          const val = trimmed.slice('POLAR_WEBHOOK_SECRET='.length).trim();
+          if (val && !val.includes('mock') && val.length > 5) return val;
+        }
+      }
+    }
+  } catch {}
+
+  return (process.env.POLAR_WEBHOOK_SECRET || '').trim();
+}
+
 function verifyWebhook(rawBody: string, headers: Record<string, string>, secret: string): any {
   const cleanSecret = secret.trim();
 
-  // 1. Standard Webhooks verification (natively supports whsec_ prefixed secrets)
+  // 1. Try official Polar SDK validateEvent
   try {
-    const wh = new Webhook(cleanSecret);
-    return wh.verify(rawBody, headers);
-  } catch (whErr: any) {
-    // 2. Fallback to Polar SDK validateEvent in case of legacy raw string secrets
+    return validateEvent(rawBody, headers, cleanSecret);
+  } catch (sdkErr: any) {
+    // 2. Try raw Standard Webhook verification
     try {
-      return validateEvent(rawBody, headers, cleanSecret);
+      const wh = new Webhook(cleanSecret);
+      return wh.verify(rawBody, headers);
     } catch {
-      throw whErr;
+      // 3. Try base64-encoded secret verification without Zod parsing
+      try {
+        const base64Secret = Buffer.from(cleanSecret, 'utf-8').toString('base64');
+        const whB64 = new Webhook(base64Secret);
+        return whB64.verify(rawBody, headers);
+      } catch {
+        // 4. Try stripping 'whsec_' prefix if present
+        if (cleanSecret.startsWith('whsec_')) {
+          try {
+            const stripped = cleanSecret.slice('whsec_'.length);
+            const whStrip = new Webhook(stripped);
+            return whStrip.verify(rawBody, headers);
+          } catch {}
+        }
+        throw sdkErr;
+      }
     }
   }
 }
@@ -37,11 +71,11 @@ export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
     const headers = Object.fromEntries(req.headers.entries());
-    const webhookSecret = process.env.POLAR_WEBHOOK_SECRET;
+    const webhookSecret = getWebhookSecret();
 
     let event: any;
 
-    if (webhookSecret && !webhookSecret.includes('mock') && webhookSecret.trim().length > 5) {
+    if (webhookSecret && !webhookSecret.includes('mock') && webhookSecret.length > 5) {
       try {
         event = verifyWebhook(rawBody, headers, webhookSecret);
       } catch (err: any) {

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { Book, Chapter } from '@/lib/types';
 import { cleanHumanProse } from '@/lib/utils';
+import SourceMaterialsVault from '@/components/book/SourceMaterialsVault';
 
 interface ChapterStudioProps {
   initialBook: Book;
@@ -675,27 +676,13 @@ export default function ChapterStudio({
             {/* TAB 3: SOURCE MATERIALS VAULT */}
             {activeLeftTab === 'sources' && (
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="font-semibold uppercase tracking-wider text-[10px] text-slate-400">
-                    Ingested Materials ({book.source_materials?.length || 0})
-                  </span>
-                </div>
-
-                {(!book.source_materials || book.source_materials.length === 0) ? (
-                  <p className="text-slate-500 text-center py-6">No voice notes or frameworks ingested yet.</p>
-                ) : (
-                  book.source_materials.map((mat) => (
-                    <div key={mat.id} className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 space-y-1.5">
-                      <div className="flex items-center gap-1.5 text-amber-400 font-medium">
-                        {mat.type === 'audio_transcript' ? <Mic className="h-3.5 w-3.5" /> : <FileText className="h-3.5 w-3.5" />}
-                        <span className="truncate">{mat.title}</span>
-                      </div>
-                      <p className="text-[11px] text-slate-300 line-clamp-4 italic">
-                        "{mat.snippet}"
-                      </p>
-                    </div>
-                  ))
-                )}
+                <SourceMaterialsVault
+                  bookId={book.id}
+                  initialSources={book.source_materials || []}
+                  onSourcesUpdated={(updatedSources) => {
+                    setBook((prev) => ({ ...prev, source_materials: updatedSources }));
+                  }}
+                />
               </div>
             )}
           </div>

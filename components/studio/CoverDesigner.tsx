@@ -58,7 +58,7 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
   const [accentColor, setAccentColor] = useState<string>(book.cover_style_config?.accent_color || '#38BDF8');
   const [authorName, setAuthorName] = useState<string>(book.cover_style_config?.author_name || 'Marcus Vance');
   const [titleText, setTitleText] = useState<string>(book.title || 'The Sovereign Operator');
-  const [subtitleText, setSubtitleText] = useState<string>(book.subtitle || 'How to Build a 7-Figure Advisory Firm on Autonomous Systems');
+  const [subtitleText, setSubtitleText] = useState<string>(book.subtitle ?? '');
 
   // Title Positioning & Framing Options
   const [titlePosition, setTitlePosition] = useState<'top' | 'center' | 'bottom'>(
@@ -104,7 +104,7 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
     setSaveStatus('saving');
     try {
       const nextTitle = overrides?.title !== undefined ? overrides.title : titleText;
-      const nextSubtitle = overrides?.subtitle !== undefined ? overrides.subtitle : subtitleText;
+      const nextSubtitle = (overrides?.subtitle !== undefined ? overrides.subtitle : subtitleText) || null;
       const nextBgUrl = overrides?.bgUrl !== undefined ? overrides.bgUrl : bgUrl;
       const nextPreset = overrides?.template || stylePreset;
       const nextFont = overrides?.font_family || fontFamily;
@@ -282,13 +282,14 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
             />
           </div>
           <div>
-            <span className="text-[10px] text-gray-400 block mb-1">Subtitle</span>
+            <span className="text-[10px] text-gray-400 block mb-1">Subtitle <span className="text-gray-300">(optional)</span></span>
             <input
               type="text"
+              placeholder="Leave blank for no subtitle"
               value={subtitleText}
               onChange={(e) => setSubtitleText(e.target.value)}
               onBlur={() => handleSaveCover()}
-              className="w-full rounded-lg bg-gray-50 border border-gray-200 px-3 py-1.5 text-xs text-gray-900 focus:outline-none focus:border-orange-400"
+              className="w-full rounded-lg bg-gray-50 border border-gray-200 px-3 py-1.5 text-xs text-gray-900 placeholder-gray-300 focus:outline-none focus:border-orange-400"
             />
           </div>
           <div>
@@ -743,14 +744,16 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
                       style={{ backgroundColor: accentColor }} 
                     />
 
-                    <p 
-                      className={`text-xs sm:text-sm font-medium leading-relaxed max-w-[300px] opacity-90 drop-shadow-sm ${
-                        titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'
-                      }`}
-                      style={{ color: subtitleColor }}
-                    >
-                      {subtitleText}
-                    </p>
+                    {subtitleText && (
+                      <p 
+                        className={`text-xs sm:text-sm font-medium leading-relaxed max-w-[300px] opacity-90 drop-shadow-sm ${
+                          titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'
+                        }`}
+                        style={{ color: subtitleColor }}
+                      >
+                        {subtitleText}
+                      </p>
+                    )}
                   </div>
 
                   {/* Empty Center Spacer to preserve the photo face/subject */}
@@ -807,14 +810,16 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
                       style={{ backgroundColor: accentColor }} 
                     />
 
-                    <p 
-                      className={`text-xs sm:text-sm font-medium leading-relaxed max-w-[300px] opacity-90 drop-shadow-md ${
-                        titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'
-                      }`}
-                      style={{ color: subtitleColor }}
-                    >
-                      {subtitleText}
-                    </p>
+                    {subtitleText && (
+                      <p 
+                        className={`text-xs sm:text-sm font-medium leading-relaxed max-w-[300px] opacity-90 drop-shadow-md ${
+                          titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'
+                        }`}
+                        style={{ color: subtitleColor }}
+                      >
+                        {subtitleText}
+                      </p>
+                    )}
 
                     <div className={`border-t border-white/10 pt-3 mt-4 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>
                       <span className="text-[10px] tracking-widest text-slate-400 uppercase block mb-0.5">
@@ -864,14 +869,16 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
                       style={{ backgroundColor: accentColor }} 
                     />
 
-                    <p 
-                      className={`text-xs sm:text-sm font-medium leading-relaxed max-w-[280px] opacity-90 drop-shadow-sm ${
-                        titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'
-                      }`}
-                      style={{ color: subtitleColor }}
-                    >
-                      {subtitleText}
-                    </p>
+                    {subtitleText && (
+                      <p 
+                        className={`text-xs sm:text-sm font-medium leading-relaxed max-w-[280px] opacity-90 drop-shadow-sm ${
+                          titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'
+                        }`}
+                        style={{ color: subtitleColor }}
+                      >
+                        {subtitleText}
+                      </p>
+                    )}
                   </div>
 
                   {/* Footer Author Name */}
@@ -984,9 +991,11 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
                       <h1 className="text-xl font-black leading-tight drop-shadow-md" style={{ color: titleColor, fontFamily }}>
                         {titleText}
                       </h1>
-                      <p className={`text-[11px] leading-snug opacity-90 max-w-[240px] drop-shadow-sm ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} style={{ color: subtitleColor }}>
-                        {subtitleText}
-                      </p>
+                      {subtitleText && (
+                        <p className={`text-[11px] leading-snug opacity-90 max-w-[240px] drop-shadow-sm ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} style={{ color: subtitleColor }}>
+                          {subtitleText}
+                        </p>
+                      )}
                     </div>
                     <div className="flex-1" />
                     <div className={`w-full border-t border-white/10 pt-3 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>
@@ -1014,9 +1023,11 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
                       <h1 className="text-xl font-black leading-tight drop-shadow-lg" style={{ color: titleColor, fontFamily }}>
                         {titleText}
                       </h1>
-                      <p className={`text-[11px] leading-snug opacity-90 max-w-[240px] drop-shadow-md ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} style={{ color: subtitleColor }}>
-                        {subtitleText}
-                      </p>
+                      {subtitleText && (
+                        <p className={`text-[11px] leading-snug opacity-90 max-w-[240px] drop-shadow-md ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} style={{ color: subtitleColor }}>
+                          {subtitleText}
+                        </p>
+                      )}
                       <div className={`border-t border-white/10 pt-2.5 mt-3 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>
                         <span className="text-xs font-bold tracking-wider" style={{ color: titleColor }}>
                           {authorName}
@@ -1043,9 +1054,11 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
                       <h1 className="text-xl font-black leading-tight drop-shadow-md" style={{ color: titleColor, fontFamily }}>
                         {titleText}
                       </h1>
-                      <p className={`text-[11px] leading-snug opacity-90 max-w-[240px] drop-shadow-sm ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} style={{ color: subtitleColor }}>
-                        {subtitleText}
-                      </p>
+                      {subtitleText && (
+                        <p className={`text-[11px] leading-snug opacity-90 max-w-[240px] drop-shadow-sm ${titleAlign === 'left' ? 'mr-auto' : titleAlign === 'right' ? 'ml-auto' : 'mx-auto'}`} style={{ color: subtitleColor }}>
+                          {subtitleText}
+                        </p>
+                      )}
                     </div>
 
                     <div className={`w-full border-t border-white/10 pt-3 ${titleAlign === 'left' ? 'text-left' : titleAlign === 'right' ? 'text-right' : 'text-center'}`}>

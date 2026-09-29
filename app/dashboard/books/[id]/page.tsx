@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { calculateEstimatedPages, formatNumber } from '@/lib/utils';
 import ChapterOutlineSection from '@/components/book/ChapterOutlineSection';
+import SourceMaterialsVault from '@/components/book/SourceMaterialsVault';
 
 export default async function BookOverviewPage({
   params,
@@ -197,34 +198,10 @@ export default async function BookOverviewPage({
             </div>
 
             {/* Source Materials Ingestion Box */}
-            <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-xl shadow-xl space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-amber-400">
-                  <Mic className="h-4 w-4" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                    Source Materials ({book.source_materials.length})
-                  </h3>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {book.source_materials.map((mat) => (
-                  <div key={mat.id} className="rounded-xl border border-slate-800 bg-slate-950/70 p-3 text-xs space-y-1">
-                    <div className="flex items-center gap-1.5 font-semibold text-white">
-                      {mat.type === 'audio_transcript' ? (
-                        <span className="rounded bg-amber-500/10 px-1.5 py-0.2 text-[10px] text-amber-400">Audio</span>
-                      ) : (
-                        <span className="rounded bg-slate-800 px-1.5 py-0.2 text-[10px] text-slate-300">Note</span>
-                      )}
-                      <span className="truncate">{mat.title}</span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 italic line-clamp-3">
-                      "{mat.snippet}"
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <SourceMaterialsVault
+              bookId={book.id}
+              initialSources={book.source_materials || []}
+            />
           </div>
         </div>
       </main>

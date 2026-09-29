@@ -41,9 +41,9 @@ export async function POST(req: NextRequest) {
       .map((c) => `Chapter ${c.chapter_number}: "${c.title}" - Summary: ${c.summary || 'Drafted'}`)
       .join('\n');
 
-    const sourceSnippets = book.source_materials
-      .map((s, i) => `[Source Material #${i + 1} - ${s.title}]: ${s.snippet}`)
-      .join('\n\n');
+    const sourceSnippets = (book.source_materials || [])
+      .map((s, i) => `[Source Material #${i + 1} - "${s.title}" (${s.type})]:\n${s.snippet.slice(0, 2500)}`)
+      .join('\n\n---\n\n');
 
     const terminologyStr = Object.entries(book.global_context.terminology || {})
       .map(([term, def]) => `- ${term}: ${def}`)
@@ -157,6 +157,7 @@ Write in natural, human, conversational prose without unnecessary '#' or '*' sym
         coreThesis: book.core_thesis,
         toneVoice: book.tone_voice,
         terminology: book.global_context?.terminology || {},
+        sourceMaterials: book.source_materials || [],
       });
       const encoder = new TextEncoder();
       const chunks = simulatedText.match(/.{1,45}/g) || [simulatedText];

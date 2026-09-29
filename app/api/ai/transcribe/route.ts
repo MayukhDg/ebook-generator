@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
     const bookId = formData.get('bookId') as string | null;
     const title = (formData.get('title') as string) || (file ? file.name : 'Voice Memo Transcript');
 
-    if (!bookId) {
-      return NextResponse.json({ error: 'Book ID is required' }, { status: 400 });
+    if (!file) {
+      return NextResponse.json({ error: 'Audio file is required' }, { status: 400 });
     }
 
     const supabase = createServerSupabaseClient();
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       userId,
       3,
       'audio_transcription',
-      { bookId, title }
+      { bookId: bookId || 'draft', title }
     );
 
     if (!deduction.success) {
@@ -39,11 +39,22 @@ export async function POST(req: NextRequest) {
 
     if (isRealKey && file) {
       try {
-        const openai = new OpenAI({ apiKey });
+        const openai = new OpenAI({ apiKey, timeout: 30000 });
+        
+        // Ensure file has a valid audio extension for OpenAI Whisper API
+        let audioFile = file;
+        const validExtensions = ['.mp3', '.mp4', '.mpeg', '.mpga', '.m4a', '.wav', '.webm', '.ogg'];
+        const hasValidExt = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+        
+        if (!hasValidExt) {
+          const extension = file.type.includes('webm') ? '.webm' : file.type.includes('mp4') ? '.m4a' : '.wav';
+          audioFile = new File([file], `voice-recording-${Date.now()}${extension}`, { type: file.type || 'audio/webm' });
+        }
+
         const response = await openai.audio.transcriptions.create({
-          file: file,
+          file: audioFile,
           model: 'whisper-1',
-          prompt: 'A business founder or consultant explaining proprietary framework, system architecture, and client case studies.',
+          prompt: 'A business founder, author, or consultant speaking about their proprietary frameworks, systems, book chapters, and client experiences.',
         });
         transcribedText = response.text;
       } catch (whisperErr: any) {
@@ -54,16 +65,21 @@ export async function POST(req: NextRequest) {
       transcribedText = getSimulatedTranscription(title);
     }
 
-    // 2. Add to Book's Source Materials Vault
+    // 2. Prepare Source Material Object
     const newMaterial = {
-      id: `mat-${Date.now()}`,
+      id: `mat-audio-${Date.now()}`,
       title,
       type: 'audio_transcript' as const,
       snippet: transcribedText,
       created_at: new Date().toISOString(),
+      file_name: file.name,
+      file_size: file.size,
     };
 
-    await store.addSourceMaterial(bookId, newMaterial);
+    // If attached to a specific book, persist immediately
+    if (bookId) {
+      await store.addSourceMaterial(bookId, newMaterial);
+    }
 
     return NextResponse.json({
       success: true,
