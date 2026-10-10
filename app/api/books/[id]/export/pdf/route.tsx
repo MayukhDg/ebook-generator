@@ -10,6 +10,7 @@ import {
   renderToBuffer 
 } from '@react-pdf/renderer';
 import { store } from '@/lib/data/store';
+import { extractText } from 'unpdf';
 
 // Define 6x9 Trade Paperback Dimensions (72 points = 1 inch)
 // 6" x 9" = 432pt x 648pt
@@ -238,6 +239,56 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f1f5f9',
     paddingBottom: 4,
   },
+  aboutAuthorPage: {
+    width: 432,
+    height: 648,
+    paddingTop: 80,
+    paddingBottom: 60,
+    paddingHorizontal: 54,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  aboutAuthorTitle: {
+    fontSize: 16,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'center',
+    marginBottom: 6,
+    color: '#0f172a',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+  },
+  aboutAuthorDivider: {
+    width: 40,
+    height: 2,
+    backgroundColor: '#f59e0b',
+    borderRadius: 1,
+    marginBottom: 24,
+    alignSelf: 'center',
+  },
+  aboutAuthorPhoto: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    objectFit: 'cover',
+    marginBottom: 16,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+  },
+  aboutAuthorName: {
+    fontSize: 14,
+    fontFamily: 'Helvetica-Bold',
+    color: '#1e293b',
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  aboutAuthorBio: {
+    fontSize: 10.5,
+    lineHeight: 1.6,
+    color: '#475569',
+    textAlign: 'center',
+    maxWidth: 310,
+  },
 });
 
 export async function GET(
@@ -276,6 +327,31 @@ export async function GET(
     const coverUrl = book.cover_bg_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80';
     let coverImageSrc: string = coverUrl;
 
+    // Check for author photo
+    const hasAuthorSection = !!(book.author_bio || book.author_photo_url);
+    let authorPhotoSrc: string | null = null;
+
+    if (book.author_photo_url && !book.author_photo_url.startsWith('data:')) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+        const res = await fetch(book.author_photo_url, {
+          signal: controller.signal,
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+        });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          const arrayBuf = await res.arrayBuffer();
+          const mimeType = res.headers.get('content-type') || 'image/jpeg';
+          authorPhotoSrc = `data:${mimeType};base64,${Buffer.from(arrayBuf).toString('base64')}`;
+        }
+      } catch (fetchErr) {
+        console.warn('Could not pre-fetch author photo:', fetchErr);
+      }
+    } else if (book.author_photo_url?.startsWith('data:')) {
+      authorPhotoSrc = book.author_photo_url;
+    }
+
     if (coverUrl && !interiorOnly) {
       if (coverUrl.startsWith('data:')) {
         coverImageSrc = coverUrl;
@@ -301,7 +377,7 @@ export async function GET(
     }
 
     // Build the React-PDF Document Component in TSX
-    const MyDocument = (
+    const buildDocument = (tocPageNumbers?: Record<number, number>) => (
       <Document
         title={book.title}
         author={authorName}
@@ -451,16 +527,16 @@ export async function GET(
                 Chapter {ch.chapter_number}: {ch.title}
               </Text>
               <Text style={{ fontSize: 10, color: '#64748b' }}>
-                {idx * 8 + 5}
+                {tocPageNumbers?.[ch.chapter_number] ?? (interiorOnly ? 3 + idx * 3 : 4 + idx * 3)}
               </Text>
             </View>
           ))}
-          <Text style={styles.pageNumber}>v</Text>
+          <Text style={styles.pageNumber} fixed>v</Text>
         </Page>
 
         {/* Chapters */}
         {chapters.map((ch) => {
-          // Parse markdown lines into simple paragraphs and headings
+          // Parse markdown lines into clean paragraphs and headings
           const lines = (ch.content_markdown || '').split('\n').filter((l) => l.trim().length > 0);
 
           return (
@@ -473,35 +549,79 @@ export async function GET(
               <Text style={styles.chapterNumber}>Chapter {ch.chapter_number}</Text>
               <Text style={styles.chapterTitle}>{ch.title}</Text>
 
-              {lines.slice(0, 15).map((line, lIdx) => {
+              {lines.map((line, lIdx) => {
                 if (line.startsWith('## ')) {
                   return (
-                    <Text key={lIdx} style={styles.heading2}>
-                      {line.replace('## ', '')}
+                    <Text key={lIdx} style={styles.heading2} minPresenceAhead={20}>
+                      {line.replace('## ', '').trim()}
                     </Text>
                   );
-                } else if (line.startsWith('# ')) {
-                  return null;
-                } else if (line.startsWith('---')) {
+                } else if (line.startsWith('# ') || line.startsWith('---')) {
                   return null;
                 }
+                const cleaned = line.replace(/\*\*/g, '').replace(/\*/g, '').trim();
+                if (!cleaned) return null;
                 return (
                   <Text key={lIdx} style={styles.paragraph}>
-                    {line.replace(/\*\*/g, '').replace(/\*/g, '')}
+                    {cleaned}
                   </Text>
                 );
               })}
 
-              <Text style={styles.pageNumber}>
-                {ch.chapter_number * 8 - 3}
-              </Text>
+              {/* Fixed page number ensures it NEVER overflows onto an empty trailing blank page */}
+              <Text
+                style={styles.pageNumber}
+                render={({ pageNumber }) => `${pageNumber}`}
+                fixed
+              />
             </Page>
           );
         })}
+
+        {/* About the Author Page (Back Matter) */}
+        {hasAuthorSection && (
+          <Page size={[432, 648]} style={styles.aboutAuthorPage}>
+            <Text style={styles.aboutAuthorTitle}>About the Author</Text>
+            <View style={styles.aboutAuthorDivider} />
+            {authorPhotoSrc && (
+              <Image src={authorPhotoSrc} style={styles.aboutAuthorPhoto} />
+            )}
+            <Text style={styles.aboutAuthorName}>{authorName}</Text>
+            {book.author_bio && (
+              <Text style={styles.aboutAuthorBio}>{book.author_bio}</Text>
+            )}
+          </Page>
+        )}
       </Document>
     );
 
-    const pdfBuffer = await renderToBuffer(MyDocument);
+    // Initial pass to render document
+    let pdfBuffer = await renderToBuffer(buildDocument());
+
+    // Detect exact starting page numbers of each chapter and update Table of Contents
+    try {
+      const parsed = await extractText(new Uint8Array(pdfBuffer));
+      const detectedPages: Record<number, number> = {};
+
+      chapters.forEach((ch) => {
+        const marker = `chapter ${ch.chapter_number}`;
+        for (let pIdx = 0; pIdx < parsed.totalPages; pIdx++) {
+          const pageTxt = (parsed.text[pIdx] || '').toLowerCase();
+          // Chapter content starts on page 3 or later (skip cover / copyright / toc self-reference)
+          if (pIdx >= 2 && pageTxt.includes(marker) && !pageTxt.includes('table of contents')) {
+            detectedPages[ch.chapter_number] = pIdx + 1;
+            break;
+          }
+        }
+      });
+
+      // If all chapter start pages were accurately detected, re-render with exact TOC page numbers
+      if (Object.keys(detectedPages).length === chapters.length) {
+        pdfBuffer = await renderToBuffer(buildDocument(detectedPages));
+      }
+    } catch (parseErr) {
+      console.warn('Could not parse initial PDF for TOC page numbers, using first pass:', parseErr);
+    }
 
     return new Response(pdfBuffer as any, {
       headers: {

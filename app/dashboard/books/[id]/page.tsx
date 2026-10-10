@@ -23,6 +23,7 @@ import {
 import { calculateEstimatedPages, formatNumber } from '@/lib/utils';
 import ChapterOutlineSection from '@/components/book/ChapterOutlineSection';
 import SourceMaterialsVault from '@/components/book/SourceMaterialsVault';
+import AboutAuthorSection from '@/components/book/AboutAuthorSection';
 
 export default async function BookOverviewPage({
   params,
@@ -201,6 +202,14 @@ export default async function BookOverviewPage({
             <SourceMaterialsVault
               bookId={book.id}
               initialSources={book.source_materials || []}
+            />
+
+            {/* About the Author Section */}
+            <AboutAuthorSection
+              bookId={book.id}
+              initialBio={book.author_bio}
+              initialPhotoUrl={book.author_photo_url}
+              authorName={book.cover_style_config?.author_name || 'Author'}
             />
           </div>
         </div>

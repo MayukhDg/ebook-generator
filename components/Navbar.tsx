@@ -93,9 +93,6 @@ export default function Navbar() {
                   <span className="text-lg font-bold tracking-tight text-gray-900 group-hover:text-orange-600 transition-colors">
                     FolioCraft<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">.ai</span>
                   </span>
-                  <span className="rounded-full border border-orange-200 bg-orange-50 px-1.5 py-0.5 text-[10px] font-semibold text-orange-600">
-                    AUTHORITY
-                  </span>
                 </div>
                 <span className="text-[10px] text-gray-400 hidden sm:inline">
                   Amazon KDP-Grade Authoring
@@ -115,8 +112,8 @@ export default function Navbar() {
                     key={link.href}
                     href={link.href}
                     className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium transition-all ${isActive
-                        ? 'bg-orange-50 text-orange-600 border border-orange-200/60 shadow-sm'
-                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-orange-50 text-orange-600 border border-orange-200/60 shadow-sm'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                   >
                     <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-orange-500' : 'text-gray-400'}`} />

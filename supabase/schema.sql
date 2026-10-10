@@ -41,6 +41,8 @@ CREATE TABLE IF NOT EXISTS public.books (
     cover_full_wrap_url TEXT,
     source_materials JSONB DEFAULT '[]'::jsonb,
     global_context JSONB DEFAULT '{}'::jsonb,
+    author_bio TEXT,
+    author_photo_url TEXT,
     is_public_preview BOOLEAN DEFAULT false,
     share_slug TEXT UNIQUE,
     created_at TIMESTAMPTZ DEFAULT now(),
@@ -363,6 +365,13 @@ VALUES
         true,
         10485760, -- 10MB limit
         ARRAY['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']::text[]
+    ),
+    (
+        'author-photos',
+        'author-photos',
+        true,
+        5242880, -- 5MB limit
+        ARRAY['image/png', 'image/jpeg', 'image/webp']::text[]
     )
 ON CONFLICT (id) DO UPDATE SET
     public = EXCLUDED.public,
@@ -421,6 +430,34 @@ CREATE POLICY "User Isolated Delete for Chapter Illustrations"
     ON storage.objects FOR DELETE
     USING (
         bucket_id = 'chapter-illustrations'
+        AND auth.role() = 'authenticated'
+        AND auth.uid()::text = (storage.foldername(name))[1]
+    );
+
+CREATE POLICY "Public Read Access for Author Photos"
+    ON storage.objects FOR SELECT
+    USING (bucket_id = 'author-photos');
+
+CREATE POLICY "User Isolated Insert for Author Photos"
+    ON storage.objects FOR INSERT
+    WITH CHECK (
+        bucket_id = 'author-photos'
+        AND auth.role() = 'authenticated'
+        AND auth.uid()::text = (storage.foldername(name))[1]
+    );
+
+CREATE POLICY "User Isolated Update for Author Photos"
+    ON storage.objects FOR UPDATE
+    USING (
+        bucket_id = 'author-photos'
+        AND auth.role() = 'authenticated'
+        AND auth.uid()::text = (storage.foldername(name))[1]
+    );
+
+CREATE POLICY "User Isolated Delete for Author Photos"
+    ON storage.objects FOR DELETE
+    USING (
+        bucket_id = 'author-photos'
         AND auth.role() = 'authenticated'
         AND auth.uid()::text = (storage.foldername(name))[1]
     );

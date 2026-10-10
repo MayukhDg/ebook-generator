@@ -108,6 +108,40 @@ export default async function PublicWebReaderPage({
             </article>
           ))}
         </div>
+
+        {/* About the Author Section */}
+        {(book.author_bio || book.author_photo_url) && (
+          <div className="border-t border-slate-800/60 pt-12 pb-8">
+            <div className="rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/90 to-slate-950 p-8 sm:p-10 text-center space-y-6 max-w-xl mx-auto shadow-2xl">
+              <div className="space-y-1">
+                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">
+                  About the Author
+                </h3>
+                <div className="w-10 h-0.5 bg-amber-500 rounded-full mx-auto" />
+              </div>
+
+              {book.author_photo_url && (
+                <div className="flex justify-center">
+                  <img
+                    src={book.author_photo_url}
+                    alt={book.cover_style_config?.author_name || 'Author'}
+                    className="h-28 w-28 rounded-full object-cover border-3 border-amber-500/30 shadow-xl shadow-black/40 ring-2 ring-slate-800"
+                  />
+                </div>
+              )}
+
+              <p className="text-lg font-bold text-white">
+                {book.cover_style_config?.author_name || 'Author'}
+              </p>
+
+              {book.author_bio && (
+                <p className="text-sm text-slate-400 leading-relaxed max-w-md mx-auto font-serif">
+                  {book.author_bio}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Subtle Viral Conversion Footer */}

@@ -69,6 +69,47 @@ p {
   font-size: 1.1em;
   color: #64748b;
   margin-bottom: 3em;
+}
+.about-author {
+  text-align: center;
+  padding: 2em 1em;
+}
+.about-author h1 {
+  font-size: 1.4em;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.3em;
+}
+.about-author .divider {
+  width: 60px;
+  height: 3px;
+  background-color: #f59e0b;
+  margin: 0 auto 1.5em auto;
+  border-radius: 2px;
+}
+.about-author img {
+  width: 120px;
+  height: 120px;
+  border-radius: 60px;
+  object-fit: cover;
+  margin: 0 auto 1em auto;
+  display: block;
+  border: 3px solid #e2e8f0;
+}
+.about-author .author-name {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #1e293b;
+  margin-bottom: 0.8em;
+}
+.about-author .bio {
+  font-size: 0.95em;
+  color: #475569;
+  line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto;
+  text-indent: 0;
+  text-align: center;
 }`
     );
 
@@ -196,6 +237,69 @@ p {
       chapterSpineItems.push(`<itemref idref="ch${ch.chapter_number}"/>`);
     });
 
+    // 6. About the Author XHTML (if bio or photo exists)
+    const hasAuthorSection = !!(book.author_bio || book.author_photo_url);
+    let authorPhotoFilename: string | null = null;
+    let authorPhotoMediaType = 'image/jpeg';
+
+    if (hasAuthorSection) {
+      // Fetch author photo if available
+      if (book.author_photo_url) {
+        try {
+          let authorPhotoBuffer: Buffer | null = null;
+          if (book.author_photo_url.startsWith('data:')) {
+            const match = book.author_photo_url.match(/^data:([^;]+);base64,(.+)$/);
+            if (match) {
+              authorPhotoMediaType = match[1];
+              authorPhotoBuffer = Buffer.from(match[2], 'base64');
+            }
+          } else {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 6000);
+            const imgRes = await fetch(book.author_photo_url, {
+              signal: controller.signal,
+              headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+            });
+            clearTimeout(timeoutId);
+            if (imgRes.ok) {
+              const arr = await imgRes.arrayBuffer();
+              authorPhotoBuffer = Buffer.from(arr);
+              authorPhotoMediaType = imgRes.headers.get('content-type') || 'image/jpeg';
+            }
+          }
+
+          if (authorPhotoBuffer) {
+            const ext = authorPhotoMediaType.includes('png') ? 'png' : authorPhotoMediaType.includes('webp') ? 'webp' : 'jpg';
+            authorPhotoFilename = `author_photo.${ext}`;
+            oebps?.file(authorPhotoFilename, authorPhotoBuffer);
+          }
+        } catch (err) {
+          console.warn('Failed to fetch author photo for EPUB:', err);
+        }
+      }
+
+      oebps?.file(
+        'about_author.xhtml',
+        `<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>About the Author</title>
+  <link rel="stylesheet" type="text/css" href="styles.css"/>
+</head>
+<body>
+  <div class="about-author">
+    <h1>About the Author</h1>
+    <div class="divider"></div>
+    ${authorPhotoFilename ? `<img src="${authorPhotoFilename}" alt="${escapeXml(author)}" />` : ''}
+    <p class="author-name">${escapeXml(author)}</p>
+    ${book.author_bio ? `<p class="bio">${escapeXml(book.author_bio)}</p>` : ''}
+  </div>
+</body>
+</html>`
+      );
+    }
+
     // 6. content.opf
     const coverExt = coverMediaType.includes('png') ? 'png' : 'jpg';
     const coverFilename = `cover.${coverExt}`;
@@ -217,11 +321,14 @@ p {
     ${coverBuffer ? `<item id="cover-image" href="${coverFilename}" media-type="${coverMediaType}" properties="cover-image"/>` : ''}
     ${!coverBuffer ? `<item id="titlepage" href="titlepage.xhtml" media-type="application/xhtml+xml"/>` : ''}
     ${chapterManifestItems.join('\n    ')}
+    ${hasAuthorSection ? `<item id="about-author" href="about_author.xhtml" media-type="application/xhtml+xml"/>` : ''}
+    ${hasAuthorSection && authorPhotoFilename ? `<item id="author-photo" href="${authorPhotoFilename}" media-type="${authorPhotoMediaType}"/>` : ''}
   </manifest>
   <spine>
     ${coverBuffer ? `<itemref idref="cover"/>` : ''}
     ${!coverBuffer ? `<itemref idref="titlepage"/>` : ''}
     ${chapterSpineItems.join('\n    ')}
+    ${hasAuthorSection ? `<itemref idref="about-author"/>` : ''}
   </spine>
 </package>`;
 

@@ -11,6 +11,7 @@ import {
   SubscriptionTier
 } from '@/lib/types';
 import { createServerSupabaseClient, createAdminSupabaseClient } from '@/lib/supabase/server';
+import { MOCK_BOOKS, MOCK_CHAPTERS } from '@/lib/data/mock-data';
 
 class ProductionDataStore {
   private isConfigured(): boolean {
@@ -275,10 +276,10 @@ class ProductionDataStore {
       }
 
       if (data) return data as Book;
-      return null;
     }
 
-    return null;
+    const mock = MOCK_BOOKS.find((b) => b.id === id);
+    return mock || null;
   }
 
   async getBookBySlug(slug: string): Promise<Book | null> {
@@ -301,10 +302,10 @@ class ProductionDataStore {
       }
 
       if (data) return data as Book;
-      return null;
     }
 
-    return null;
+    const mock = MOCK_BOOKS.find((b) => b.share_slug === slug);
+    return mock || null;
   }
 
   async createBook(data: Partial<Book>): Promise<Book> {
@@ -339,6 +340,8 @@ class ProductionDataStore {
         terminology: {},
         rolling_abstracts: [],
       },
+      author_bio: data.author_bio || null,
+      author_photo_url: data.author_photo_url || null,
       is_public_preview: false,
       share_slug: data.share_slug || `book-${Date.now()}`,
     };
@@ -386,7 +389,13 @@ class ProductionDataStore {
         console.error('Error updating book in store:', error);
       }
       if (data) return data as Book;
-      return null;
+    }
+
+    // In-memory fallback for mock/demo books
+    const mockIdx = MOCK_BOOKS.findIndex((b) => b.id === id);
+    if (mockIdx !== -1) {
+      MOCK_BOOKS[mockIdx] = { ...MOCK_BOOKS[mockIdx], ...updates, updated_at: new Date().toISOString() };
+      return MOCK_BOOKS[mockIdx];
     }
 
     return null;
@@ -449,11 +458,10 @@ class ProductionDataStore {
         data = adminRes.data;
       }
 
-      if (data) return data as Chapter[];
-      return [];
+      if (data && data.length > 0) return data as Chapter[];
     }
 
-    return [];
+    return MOCK_CHAPTERS.filter((ch) => ch.book_id === bookId);
   }
 
   async getChapterById(chapterId: string): Promise<Chapter | null> {
