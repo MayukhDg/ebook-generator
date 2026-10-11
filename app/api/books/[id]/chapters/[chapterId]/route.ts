@@ -42,3 +42,26 @@ export async function PATCH(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string; chapterId: string } }
+) {
+  try {
+    const success = await store.deleteChapter(params.chapterId);
+    if (!success) {
+      return NextResponse.json(
+        { error: 'Chapter not found or failed to delete' },
+        { status: 404 }
+      );
+    }
+    return NextResponse.json({
+      success: true,
+      message: 'Chapter deleted successfully',
+      chapterId: params.chapterId,
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+

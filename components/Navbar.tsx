@@ -91,7 +91,7 @@ export default function Navbar() {
               <div className="flex flex-col">
                 <div className="flex items-center gap-1.5">
                   <span className="text-lg font-bold tracking-tight text-gray-900 group-hover:text-orange-600 transition-colors">
-                    FolioCraft<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">.ai</span>
+                    FolioCraft<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500"></span>
                   </span>
                 </div>
                 <span className="text-[10px] text-gray-400 hidden sm:inline">

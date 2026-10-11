@@ -43,6 +43,7 @@ export interface CoverStyleConfig {
   title_offset_y?: number;
   show_badge?: boolean;
   overlay_opacity?: number;
+  toc_page_overrides?: Record<number, number>;
 }
 
 export interface SourceMaterial {

@@ -598,27 +598,79 @@ export async function GET(
     // Initial pass to render document
     let pdfBuffer = await renderToBuffer(buildDocument());
 
-    // Detect exact starting page numbers of each chapter and update Table of Contents
+    // Detect exact starting page numbers of each chapter dynamically and update Table of Contents
     try {
       const parsed = await extractText(new Uint8Array(pdfBuffer));
       const detectedPages: Record<number, number> = {};
 
+      // 1. Determine where Table of Contents ends so we only scan chapter body pages
+      let firstChapterPageIdx = interiorOnly ? 2 : 3;
+      for (let pIdx = 0; pIdx < parsed.totalPages; pIdx++) {
+        const rawTxt = (parsed.text[pIdx] || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (rawTxt.includes('tableofcontents')) {
+          firstChapterPageIdx = Math.max(firstChapterPageIdx, pIdx + 1);
+        }
+      }
+
+      // 2. Scan pages sequentially in chapter order
+      let currentSearchPage = firstChapterPageIdx;
+
       chapters.forEach((ch) => {
-        const marker = `chapter ${ch.chapter_number}`;
-        for (let pIdx = 0; pIdx < parsed.totalPages; pIdx++) {
-          const pageTxt = (parsed.text[pIdx] || '').toLowerCase();
-          // Chapter content starts on page 3 or later (skip cover / copyright / toc self-reference)
-          if (pIdx >= 2 && pageTxt.includes(marker) && !pageTxt.includes('table of contents')) {
+        const numPattern = `chapter${ch.chapter_number}`;
+        const titleClean = (ch.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        for (let pIdx = currentSearchPage; pIdx < parsed.totalPages; pIdx++) {
+          const pageRaw = parsed.text[pIdx] || '';
+          const pageCollapsed = pageRaw.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+          // Check if this page starts this chapter:
+          // Matches "chapter{N}" header or the full chapter title (even with letter spacing collapsed)
+          const matchesNum = pageCollapsed.includes(numPattern);
+          const matchesTitle = titleClean.length > 3 && pageCollapsed.includes(titleClean);
+
+          if (matchesNum || matchesTitle) {
             detectedPages[ch.chapter_number] = pIdx + 1;
+            currentSearchPage = pIdx + 1; // Subsequent chapters must start on or after this page
             break;
           }
         }
       });
 
-      // If all chapter start pages were accurately detected, re-render with exact TOC page numbers
-      if (Object.keys(detectedPages).length === chapters.length) {
-        pdfBuffer = await renderToBuffer(buildDocument(detectedPages));
+      // 3. Fallback interpolation for any missing chapter
+      chapters.forEach((ch, idx) => {
+        if (!detectedPages[ch.chapter_number]) {
+          const prevPage = idx > 0 ? detectedPages[chapters[idx - 1].chapter_number] : (interiorOnly ? 3 : 4);
+          detectedPages[ch.chapter_number] = (prevPage || 4) + 3;
+        }
+      });
+
+      // 4. Check for user manual overrides from book config or query param
+      let paramOverrides: Record<string, number> = {};
+      const overrideParam = searchParams.get('tocOverrides');
+      if (overrideParam) {
+        try {
+          paramOverrides = JSON.parse(overrideParam);
+        } catch {}
       }
+
+      const bookOverrides = book.cover_style_config?.toc_page_overrides || {};
+      const finalPageNumbers: Record<number, number> = { ...detectedPages };
+      
+      // Apply any book manual overrides
+      Object.entries(bookOverrides).forEach(([k, v]) => {
+        if (typeof v === 'number' && v > 0) {
+          finalPageNumbers[Number(k)] = v;
+        }
+      });
+      // Apply any URL param overrides
+      Object.entries(paramOverrides).forEach(([k, v]) => {
+        if (typeof v === 'number' && v > 0) {
+          finalPageNumbers[Number(k)] = v;
+        }
+      });
+
+      // Re-render with exact TOC page numbers
+      pdfBuffer = await renderToBuffer(buildDocument(finalPageNumbers));
     } catch (parseErr) {
       console.warn('Could not parse initial PDF for TOC page numbers, using first pass:', parseErr);
     }

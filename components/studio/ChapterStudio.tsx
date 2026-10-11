@@ -21,7 +21,11 @@ import {
   PlusCircle,
   Loader2,
   Eye,
-  Edit3
+  Edit3,
+  Pencil,
+  Check,
+  X,
+  Trash2
 } from 'lucide-react';
 import { Book, Chapter } from '@/lib/types';
 import { cleanHumanProse } from '@/lib/utils';
@@ -75,6 +79,10 @@ export default function ChapterStudio({
 
   const editorRef = useRef<HTMLTextAreaElement>(null);
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [editingChapterId, setEditingChapterId] = useState<string | null>(null);
+  const [editingChapterTitle, setEditingChapterTitle] = useState<string>('');
+  const [chapterToDelete, setChapterToDelete] = useState<Chapter | null>(null);
+  const [isDeletingChapter, setIsDeletingChapter] = useState<boolean>(false);
 
   // 1-Click clean up unnecessary '#' and '*' symbols, convert excessive em dashes, and humanize
   const handleCleanAndHumanize = () => {
@@ -222,6 +230,101 @@ export default function ChapterStudio({
       console.error('Failed to add chapter:', err);
     } finally {
       setIsAddingChapter(false);
+    }
+  };
+
+  // Rename chapter title inline
+  const handleRenameChapter = async (chapterId: string, newTitle: string) => {
+    const trimmed = newTitle.trim();
+    if (!trimmed || !book) {
+      setEditingChapterId(null);
+      return;
+    }
+
+    // Find the chapter to check if title actually changed
+    const target = chapters.find((c) => c.id === chapterId);
+    if (target && target.title === trimmed) {
+      setEditingChapterId(null);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/books/${book.id}/chapters/${chapterId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: trimmed }),
+      });
+
+      if (res.ok) {
+        setChapters((prev) =>
+          prev.map((c) => (c.id === chapterId ? { ...c, title: trimmed } : c))
+        );
+        // Also update currentChapter if it's the one being renamed
+        if (currentChapter?.id === chapterId) {
+          setCurrentChapter((prev) => prev ? { ...prev, title: trimmed } : prev);
+        }
+        setStatusMessage('Chapter renamed successfully.');
+      } else {
+        const d = await res.json().catch(() => ({ error: 'Failed to rename' }));
+        setStatusMessage(`Rename failed: ${d.error || 'Unknown error'}`);
+      }
+    } catch (err: any) {
+      setStatusMessage(`Rename error: ${err.message}`);
+    } finally {
+      setEditingChapterId(null);
+    }
+  };
+
+  // Delete a chapter from studio
+  const handleDeleteChapter = async (targetChapter: Chapter) => {
+    if (!book || isDeletingChapter) return;
+    setIsDeletingChapter(true);
+
+    try {
+      const res = await fetch(`/api/books/${book.id}/chapters/${targetChapter.id}`, {
+        method: 'DELETE',
+      });
+
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ error: 'Failed to delete' }));
+        throw new Error(d.error || 'Failed to delete chapter');
+      }
+
+      const remaining = chapters
+        .filter((c) => c.id !== targetChapter.id)
+        .map((c, i) => ({ ...c, chapter_number: i + 1 }));
+
+      setChapters(remaining);
+      setChapterToDelete(null);
+
+      // If the deleted chapter was the currently active chapter:
+      if (currentChapter?.id === targetChapter.id) {
+        if (remaining.length > 0) {
+          const oldIndex = chapters.findIndex((c) => c.id === targetChapter.id);
+          const nextIndex = Math.min(oldIndex, remaining.length - 1);
+          const nextTarget = remaining[Math.max(0, nextIndex)];
+
+          setCurrentChapter(nextTarget);
+          setMarkdownContent(nextTarget.content_markdown || '');
+          const count = nextTarget.word_count || (nextTarget.content_markdown ? nextTarget.content_markdown.trim().split(/\s+/).filter(Boolean).length : 0);
+          setWordCount(count);
+          setSelectedText('');
+          setRevisionHistory([
+            { version: nextTarget.version || 1, time: 'Initial Load', text: nextTarget.content_markdown || '' },
+          ]);
+          router.push(`/dashboard/books/${book.id}/chapter/${nextTarget.id}`);
+        } else {
+          router.push(`/dashboard/books/${book.id}`);
+          return;
+        }
+      }
+
+      setStatusMessage(`Chapter ${targetChapter.chapter_number} deleted successfully.`);
+      router.refresh();
+    } catch (err: any) {
+      setStatusMessage(`Delete error: ${err.message}`);
+    } finally {
+      setIsDeletingChapter(false);
     }
   };
 
@@ -496,6 +599,18 @@ export default function ChapterStudio({
               <span className="hidden sm:inline">Versions ({revisionHistory.length})</span>
             </button>
 
+            {/* Delete Chapter Trigger */}
+            {currentChapter && (
+              <button
+                onClick={() => setChapterToDelete(currentChapter)}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-2.5 py-1 text-xs text-slate-400 hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-400 transition-all"
+                title="Delete this chapter"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span className="hidden lg:inline">Delete</span>
+              </button>
+            )}
+
             {/* Prev / Next Navigation */}
             <div className="flex items-center gap-1">
               {prevChapter && (
@@ -572,36 +687,103 @@ export default function ChapterStudio({
                 </div>
                 {chapters.map((ch) => {
                   const isCurrent = ch.id === currentChapter.id;
+                  const isEditing = editingChapterId === ch.id;
                   return (
-                    <button
+                    <div
                       key={ch.id}
-                      onClick={() => handleSelectChapter(ch)}
-                      className={`w-full text-left p-2.5 rounded-xl border transition-all ${
+                      className={`group/card relative w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer ${
                         isCurrent
                           ? 'border-amber-500 bg-amber-500/10 text-white shadow-sm'
                           : 'border-slate-800/80 bg-slate-950/40 text-slate-300 hover:border-slate-700 hover:bg-slate-800/40'
                       }`}
+                      onClick={() => {
+                        if (!isEditing) handleSelectChapter(ch);
+                      }}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className={`font-mono text-[10px] font-bold ${isCurrent ? 'text-amber-400' : 'text-slate-500'}`}>
                           CH {ch.chapter_number}
                         </span>
-                        <span className={`text-[10px] px-1.5 py-0.2 rounded font-medium ${
-                          ch.status === 'completed'
-                            ? 'bg-emerald-500/10 text-emerald-400'
-                            : ch.status === 'review'
-                            ? 'bg-amber-500/10 text-amber-400'
-                            : 'bg-slate-800 text-slate-400'
-                        }`}>
-                          {ch.status}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] px-1.5 py-0.2 rounded font-medium ${
+                            ch.status === 'completed'
+                              ? 'bg-emerald-500/10 text-emerald-400'
+                              : ch.status === 'review'
+                              ? 'bg-amber-500/10 text-amber-400'
+                              : 'bg-slate-800 text-slate-400'
+                          }`}>
+                            {ch.status}
+                          </span>
+                        </div>
                       </div>
-                      <div className="font-semibold truncate">{ch.title}</div>
-                      <div className="text-[10px] text-slate-400 mt-1 flex justify-between">
+                      {isEditing ? (
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            autoFocus
+                            type="text"
+                            value={editingChapterTitle}
+                            onChange={(e) => setEditingChapterTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                handleRenameChapter(ch.id, editingChapterTitle);
+                              } else if (e.key === 'Escape') {
+                                setEditingChapterId(null);
+                              }
+                            }}
+                            onBlur={() => handleRenameChapter(ch.id, editingChapterTitle)}
+                            className="flex-1 min-w-0 rounded-lg bg-slate-950 border border-amber-500/50 px-2 py-1 text-xs font-semibold text-white placeholder-slate-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-500/40"
+                          />
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1 group/title">
+                          <div
+                            className="font-semibold truncate flex-1"
+                            onDoubleClick={(e) => {
+                              e.stopPropagation();
+                              setEditingChapterId(ch.id);
+                              setEditingChapterTitle(ch.title);
+                            }}
+                          >
+                            {ch.title}
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingChapterId(ch.id);
+                              setEditingChapterTitle(ch.title);
+                            }}
+                            className="shrink-0 opacity-0 group-hover/card:opacity-100 rounded-md p-1 text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 transition-all"
+                            title="Rename chapter"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setChapterToDelete(ch);
+                            }}
+                            className="shrink-0 opacity-0 group-hover/card:opacity-100 rounded-md p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-all"
+                            title="Delete chapter"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      )}
+                      <div className="text-[10px] text-slate-400 mt-1 flex justify-between items-center">
                         <span>{ch.word_count || 0} words</span>
+                        <span className="text-amber-400/90 font-mono font-medium" title="Estimated start page in 6x9 trade PDF">
+                          pg. {(() => {
+                            let page = 4;
+                            for (let i = 0; i < chapters.findIndex((c) => c.id === ch.id); i++) {
+                              const wc = chapters[i]?.word_count || 0;
+                              page += Math.max(1, Math.ceil(Math.max(0, wc - 200) / 290) + 1);
+                            }
+                            return page;
+                          })()}
+                        </span>
                         <span>v{ch.version || 1}</span>
                       </div>
-                    </button>
+                    </div>
                   );
                 })}
 
@@ -922,6 +1104,76 @@ export default function ChapterStudio({
                 className="rounded-lg bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Chapter Confirmation Modal */}
+      {chapterToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md rounded-3xl border border-rose-500/30 bg-slate-900 p-6 shadow-2xl space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400">
+                  <Trash2 className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    Delete Chapter {chapterToDelete.chapter_number}?
+                  </h3>
+                  <p className="text-xs text-rose-400/90 font-medium">
+                    This action cannot be undone
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  if (!isDeletingChapter) setChapterToDelete(null);
+                }}
+                disabled={isDeletingChapter}
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-800 hover:text-white disabled:opacity-50"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="rounded-2xl border border-slate-800 bg-slate-950/60 p-3.5 space-y-2">
+              <p className="text-xs text-slate-300">
+                You are about to delete <span className="font-semibold text-white">&quot;{chapterToDelete.title}&quot;</span> ({chapterToDelete.word_count || 0} words).
+              </p>
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                All written drafts, notes, and manuscript content for this chapter will be permanently removed. Remaining chapters will be automatically renumbered.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setChapterToDelete(null)}
+                disabled={isDeletingChapter}
+                className="rounded-full bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-300 hover:bg-slate-700 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteChapter(chapterToDelete)}
+                disabled={isDeletingChapter}
+                className="flex items-center gap-2 rounded-full bg-rose-600 px-5 py-2 text-xs font-bold text-white hover:bg-rose-500 transition-all disabled:opacity-50 shadow-lg shadow-rose-950"
+              >
+                {isDeletingChapter ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete Chapter
+                  </>
+                )}
               </button>
             </div>
           </div>

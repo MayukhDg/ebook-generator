@@ -107,6 +107,7 @@ export default async function BookOverviewPage({
               <a
                 href={`/api/books/${book.id}/export/pdf`}
                 download
+                title="Export 6x9 trade paperback PDF with dynamic auto-aligned Table of Contents"
                 className="w-full flex items-center justify-center gap-2 rounded-xl border border-slate-800 bg-slate-900/90 px-4 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-all"
               >
                 <Printer className="h-3.5 w-3.5 text-emerald-400" />
@@ -167,6 +168,7 @@ export default async function BookOverviewPage({
             bookId={book.id}
             bookTitle={book.title}
             initialChapters={chapters}
+            initialBook={book}
           />
 
           {/* Right Column: Global Context Memory & Source Ingestion */}

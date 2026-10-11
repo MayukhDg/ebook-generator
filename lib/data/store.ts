@@ -566,7 +566,82 @@ class ProductionDataStore {
       return null;
     }
 
+    const mockIdx = MOCK_CHAPTERS.findIndex((c) => c.id === id);
+    if (mockIdx !== -1) {
+      MOCK_CHAPTERS[mockIdx] = { ...MOCK_CHAPTERS[mockIdx], ...payload };
+      return MOCK_CHAPTERS[mockIdx];
+    }
+
     return null;
+  }
+
+  async deleteChapter(chapterId: string): Promise<boolean> {
+    if (this.isConfigured()) {
+      const supabase = createServerSupabaseClient();
+      const targetChapter = await this.getChapterById(chapterId);
+      const bookId = targetChapter?.book_id;
+
+      let { error } = await supabase
+        .from('chapters')
+        .delete()
+        .eq('id', chapterId);
+
+      if (error && process.env.SUPABASE_SERVICE_ROLE_KEY) {
+        const admin = createAdminSupabaseClient();
+        const adminRes = await admin
+          .from('chapters')
+          .delete()
+          .eq('id', chapterId);
+        error = adminRes.error;
+      }
+
+      if (error) {
+        console.error('Error deleting chapter in store:', error);
+        return false;
+      }
+
+      // Renumber remaining chapters for consistency
+      if (bookId) {
+        try {
+          const remaining = await this.getChapters(bookId);
+          const client = process.env.SUPABASE_SERVICE_ROLE_KEY
+            ? createAdminSupabaseClient()
+            : supabase;
+
+          for (let i = 0; i < remaining.length; i++) {
+            const ch = remaining[i];
+            const expectedNumber = i + 1;
+            if (ch.chapter_number !== expectedNumber) {
+              await client
+                .from('chapters')
+                .update({ 
+                  chapter_number: expectedNumber,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', ch.id);
+            }
+          }
+        } catch (renumberErr) {
+          console.warn('Failed to renumber chapters after deletion:', renumberErr);
+        }
+      }
+
+      return true;
+    }
+
+    // In-memory fallback
+    const idx = MOCK_CHAPTERS.findIndex((c) => c.id === chapterId);
+    if (idx !== -1) {
+      const bookId = MOCK_CHAPTERS[idx].book_id;
+      MOCK_CHAPTERS.splice(idx, 1);
+      const remaining = MOCK_CHAPTERS.filter((c) => c.book_id === bookId);
+      remaining.forEach((ch, i) => {
+        ch.chapter_number = i + 1;
+      });
+      return true;
+    }
+
+    return true;
   }
 
   // ---------------------------------------------------------------------------
