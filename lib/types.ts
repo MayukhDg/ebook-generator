@@ -21,10 +21,8 @@ export interface Profile {
   full_name: string | null;
   credits_balance: number;
   subscription_tier: SubscriptionTier;
-  stripe_customer_id: string | null;
-  stripe_subscription_id: string | null;
-  polar_customer_id?: string | null;
-  polar_subscription_id?: string | null;
+  dodo_customer_id?: string | null;
+  dodo_subscription_id?: string | null;
   created_at: string;
   updated_at: string;
 }

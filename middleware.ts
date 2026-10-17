@@ -112,8 +112,8 @@ async function checkAdminAccess(request: NextRequest): Promise<NextResponse | nu
     return null;
   }
 
-  const expectedToken = await sha256Hex(`foliocraft_admin_${adminSecret}_salt_v1`);
-  const cookieToken = request.cookies.get('foliocraft_admin_token')?.value;
+  const expectedToken = await sha256Hex(`opuscraft_admin_${adminSecret}_salt_v1`);
+  const cookieToken = request.cookies.get('opuscraft_admin_token')?.value;
 
   if (!cookieToken || cookieToken !== expectedToken) {
     return NextResponse.redirect(new URL('/admin', request.url));

@@ -25,9 +25,9 @@ export default async function PublicWebReaderPage({
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2">
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500 text-slate-950 font-bold text-xs">
-                F
+                O
               </div>
-              <span className="text-sm font-bold text-white hidden sm:inline">FolioCraft AI Reader</span>
+              <span className="text-sm font-bold text-white hidden sm:inline">OpusCraft Reader</span>
             </Link>
             <span className="text-slate-600">/</span>
             <span className="text-xs text-amber-400 font-semibold truncate max-w-xs">{book.title}</span>
@@ -148,7 +148,7 @@ export default async function PublicWebReaderPage({
       <footer className="border-t border-amber-500/20 bg-gradient-to-r from-amber-500/10 via-slate-950 to-amber-500/10 py-8 px-4 text-center">
         <div className="mx-auto max-w-xl space-y-3">
           <div className="flex items-center justify-center gap-1.5 text-amber-400 font-bold text-xs">
-            <Sparkles className="h-4 w-4" /> Authored with FolioCraft AI
+            <Sparkles className="h-4 w-4" /> Authored with OpusCraft
           </div>
           <h3 className="text-lg sm:text-xl font-extrabold text-white">
             Turn your real-world expertise into a published, press-ready book in an afternoon.

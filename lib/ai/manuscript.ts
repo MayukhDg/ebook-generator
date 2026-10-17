@@ -1,6 +1,6 @@
 
 /**
- * FolioCraft AI - Chapter Manuscript Generator
+ * OpusCraft - Chapter Manuscript Generator
  * Produces substantive, coherent, in-depth chapter manuscripts tailored
  * precisely to the book's topic, genre, and core thesis.
  */

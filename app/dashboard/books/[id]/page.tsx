@@ -18,7 +18,8 @@ import {
   Clock, 
   ChevronRight,
   PlusCircle,
-  Eye
+  Eye,
+  ImageIcon
 } from 'lucide-react';
 import { calculateEstimatedPages, formatNumber } from '@/lib/utils';
 import ChapterOutlineSection from '@/components/book/ChapterOutlineSection';
@@ -103,6 +104,16 @@ export default async function BookOverviewPage({
                 <Palette className="h-4 w-4 text-amber-400" />
                 Cover Studio (2-Layer)
               </Link>
+
+              <a
+                href={`/api/books/${book.id}/export/cover`}
+                download
+                title="Download high-resolution 1600x2560 300 DPI Cover JPG"
+                className="w-full flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/20 px-4 py-2 text-xs font-medium text-emerald-300 hover:bg-emerald-900/30 hover:border-emerald-500/50 transition-all"
+              >
+                <ImageIcon className="h-3.5 w-3.5 text-emerald-400" />
+                Download Cover (JPG)
+              </a>
 
               <a
                 href={`/api/books/${book.id}/export/pdf`}

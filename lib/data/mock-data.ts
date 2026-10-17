@@ -2,12 +2,12 @@ import { Book, Chapter, BlogPost, Profile, CreditTransaction } from '@/lib/types
 
 export const MOCK_PROFILE: Profile = {
   id: '00000000-0000-0000-0000-000000000001',
-  email: 'author@foliocraft.ai',
+  email: 'author@opuscraft.ai',
   full_name: 'Marcus Vance',
   credits_balance: 185,
   subscription_tier: 'authority',
-  stripe_customer_id: 'cus_mock_author123',
-  stripe_subscription_id: 'sub_mock_authority456',
+  dodo_customer_id: 'cus_dodo_author123',
+  dodo_subscription_id: 'sub_dodo_authority456',
   created_at: new Date(Date.now() - 30 * 86400000).toISOString(),
   updated_at: new Date().toISOString(),
 };
@@ -330,7 +330,7 @@ When you ask ChatGPT to write Chapter 7 after generating Chapters 1 through 6, i
 **The Result:** By Chapter 5, the model begins repeating introductory concepts, introducing conflicting definitions, or hallucinating analogies that contradict earlier chapters.
 
 ### The Solution: Global Context Rolling Memory
-In FolioCraft AI, book generation does not happen in an untethered chat window. Every book initializes an immutable **Global Context Memory Object** containing:
+In OpusCraft, book generation does not happen in an untethered chat window. Every book initializes an immutable **Global Context Memory Object** containing:
 - Target Reader Archetype & Frustrations
 - Core Central Thesis
 - Coined Vocabulary & Framework Lexicon
@@ -346,7 +346,7 @@ Have you ever tried to generate a book cover using DALL-E or Midjourney? You inv
 
 Raw image models are probabilistic pixel predictors, not graphic designers. They do not understand kerning, baseline grids, or print-ready CMYK color spaces.
 
-FolioCraft AI implements a **Two-Layer Decoupled Studio**:
+OpusCraft implements a **Two-Layer Decoupled Studio**:
 1. **DALL-E 3 Background Engine:** Commands generative AI to render *strictly negative-space editorial textures and background art* with zero typography.
 2. **SVG Vector Typography Overlay:** Renders crisp, misspell-free fonts (Inter, Playfair Display, Space Grotesk) with dynamic Amazon KDP spine calculations ($Spine = Pages \\times 0.002252"$).
 
@@ -358,7 +358,7 @@ If your goal is building authority, your book cannot read like a regurgitated Wi
 
 Co-writing chapter-by-chapter with structured memory and surgical editorial prompts produces Amazon KDP-grade books in an afternoon—without compromising your reputation.`,
     funnel_stage: 'awareness',
-    canonical_url: 'https://foliocraft.ai/blog/why-chatgpt-fails-at-writing-books',
+    canonical_url: 'https://opuscraft.ai/blog/why-chatgpt-fails-at-writing-books',
     target_keywords: ['chatgpt book writing', 'amazon kdp ai ban', 'ai context drift', 'ai book generator', 'write non-fiction book ai'],
     schema_json: {
       '@context': 'https://schema.org',
@@ -382,10 +382,10 @@ Co-writing chapter-by-chapter with structured memory and surgical editorial prom
         },
         {
           '@type': 'Question',
-          name: 'How does FolioCraft AI prevent AI hallucinations in books?',
+          name: 'How does OpusCraft prevent AI hallucinations in books?',
           acceptedAnswer: {
             '@type': 'Answer',
-            text: 'FolioCraft AI grounds chapter generation in user-uploaded voice notes, client transcripts, and an immutable Global Context memory layer that tracks rolling abstracts of previous chapters.',
+            text: 'OpusCraft grounds chapter generation in user-uploaded voice notes, client transcripts, and an immutable Global Context memory layer that tracks rolling abstracts of previous chapters.',
           },
         },
       ],
@@ -406,7 +406,7 @@ You explain your methodology on client Zoom calls. You leave 7-minute voice note
 
 You already have 10 books inside your head. You just lack 6 months to sit in an isolated cabin typing 60,000 words.
 
-Here is the exact 4-hour workflow used by 7-figure operators to transform existing voice recordings into an Amazon KDP-ready authority book using FolioCraft AI.
+Here is the exact 4-hour workflow used by 7-figure operators to transform existing voice recordings into an Amazon KDP-ready authority book using OpusCraft.
 
 ---
 
@@ -418,7 +418,7 @@ Instead of starting with a blank Google Doc, pull 3 to 5 audio assets:
 - Two voice memos recorded during your morning walk explaining your core thesis.
 - A bulleted list of 5 common objections your clients raise.
 
-Upload these directly into the FolioCraft AI Ingestion Studio. OpenAI Whisper processes the audio files and indexes them into the book's **Source Materials Vault**.
+Upload these directly into the OpusCraft Ingestion Studio. OpenAI Whisper processes the audio files and indexes them into the book's **Source Materials Vault**.
 
 ### Step 2: Global Memory & Blueprint Synthesis (20 Minutes)
 The Blueprint Engine synthesizes your unstructured thoughts into an authoritative 8-to-10 chapter narrative arc. It extracts:
@@ -448,7 +448,7 @@ Rather than a "generate all" button that creates generic fluff, you co-author on
 4. Co-write and polish chapter drafts with revision diffs.
 5. Export to Amazon KDP Print and Kindle EPUB.`,
     funnel_stage: 'consideration',
-    canonical_url: 'https://foliocraft.ai/blog/turn-voice-notes-and-client-frameworks-into-an-ebook',
+    canonical_url: 'https://opuscraft.ai/blog/turn-voice-notes-and-client-frameworks-into-an-ebook',
     target_keywords: ['voice to book', 'consultant book publishing', 'how to write book fast', 'speech to text book', 'turn notes into ebook'],
     schema_json: {
       '@context': 'https://schema.org',
@@ -485,21 +485,21 @@ Rather than a "generate all" button that creates generic fluff, you co-author on
   {
     id: 'a1000000-0000-0000-0000-000000000003',
     slug: 'best-ai-ebook-creators-reviewed',
-    title: '2026 Breakdown: FolioCraft AI vs. GetEbook.ai vs. Designrr',
+    title: '2026 Breakdown: OpusCraft vs. GetEbook.ai vs. Designrr',
     meta_description: 'A candid, technical review of leading AI book creation tools in 2026. Compare context retention, typography quality, KDP compliance, and pricing.',
-    content_markdown: `# 2026 Breakdown: FolioCraft AI vs. GetEbook.ai vs. Designrr
+    content_markdown: `# 2026 Breakdown: OpusCraft vs. GetEbook.ai vs. Designrr
 
 The market for AI book software exploded over the past 24 months. But as any discerning author knows, most tools are thin wrappers around ChatGPT that churn out shallow, spammy PDFs.
 
 If you are writing a book to land $25k consulting engagements, keynote speaking slots, or high-tier enterprise clients, publishing a sub-par book is worse than publishing nothing at all.
 
-Here is an objective technical comparison between **FolioCraft AI**, **GetEbook.ai**, and **Designrr**.
+Here is an objective technical comparison between **OpusCraft**, **GetEbook.ai**, and **Designrr**.
 
 ---
 
 ## Comparison Matrix
 
-| Feature / Dimension | FolioCraft AI | GetEbook.ai | Designrr |
+| Feature / Dimension | OpusCraft | GetEbook.ai | Designrr |
 | :--- | :--- | :--- | :--- |
 | **Target User** | Founders, Consultants, Operators | Affiliate Marketers | Lead Magnet Creators |
 | **Context Architecture** | Rolling Global Memory + Source Ingestion | Single prompt stateless | PDF blog-to-ebook scraper |
@@ -515,14 +515,14 @@ Here is an objective technical comparison between **FolioCraft AI**, **GetEbook.
 
 - **Choose Designrr** if you have 40 blog posts from 2021 that you want to re-bundle into an opt-in lead magnet PDF.
 - **Choose GetEbook.ai** if you want to churn out short 15-page generic guides for low-ticket affiliate offers.
-- **Choose FolioCraft AI** if you are a domain expert who wants to synthesize proprietary frameworks, voice notes, and methodology into a genuine Amazon KDP-grade paperback book with clean vector typography and zero hallucinated fluff.`,
+- **Choose OpusCraft** if you are a domain expert who wants to synthesize proprietary frameworks, voice notes, and methodology into a genuine Amazon KDP-grade paperback book with clean vector typography and zero hallucinated fluff.`,
     funnel_stage: 'purchase',
-    canonical_url: 'https://foliocraft.ai/blog/best-ai-ebook-creators-reviewed',
-    target_keywords: ['best ai ebook creator', 'designrr alternative', 'ai book software 2026', 'foliocraft review', 'kdp print ai software'],
+    canonical_url: 'https://opuscraft.ai/blog/best-ai-ebook-creators-reviewed',
+    target_keywords: ['best ai ebook creator', 'designrr alternative', 'ai book software 2026', 'opuscraft review', 'kdp print ai software'],
     schema_json: {
       '@context': 'https://schema.org',
       '@type': 'SoftwareApplication',
-      name: 'FolioCraft AI',
+      name: 'OpusCraft',
       applicationCategory: 'AuthoringApplication',
       operatingSystem: 'Web',
       offers: {
@@ -587,7 +587,7 @@ export const MOCK_CREDIT_TRANSACTIONS: CreditTransaction[] = [
     user_id: '00000000-0000-0000-0000-000000000001',
     amount: 50,
     action_type: 'credit_purchase',
-    metadata: { pack: 'topup_50', stripe_payment_id: 'pi_mock_123' },
+    metadata: { pack: 'topup_50', dodo_payment_id: 'pay_dodo_mock_123' },
     created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
   },
 ];

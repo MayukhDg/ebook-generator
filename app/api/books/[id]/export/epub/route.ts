@@ -13,7 +13,7 @@ export async function GET(
     }
 
     const chapters = await store.getChapters(book.id);
-    const author = book.cover_style_config?.author_name || 'FolioCraft Author';
+    const author = book.cover_style_config?.author_name || 'OpusCraft Author';
     const bookId = `urn:uuid:${book.id}`;
     const zip = new JSZip();
 

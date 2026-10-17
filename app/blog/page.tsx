@@ -7,7 +7,7 @@ import { FileText, Sparkles, ArrowRight, Calendar } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export const metadata = {
-  title: 'Authority Publishing & AEO Insights | FolioCraft AI',
+  title: 'Authority Publishing & AEO Insights | OpusCraft',
   description: 'Technical breakdowns, publishing frameworks, and non-fiction authoring strategies for consultants, founders, and high-output operators.',
 };
 

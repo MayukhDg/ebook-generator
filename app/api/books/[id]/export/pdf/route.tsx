@@ -382,7 +382,7 @@ export async function GET(
         title={book.title}
         author={authorName}
         subject={book.core_thesis}
-        keywords="Amazon KDP, Trade Paperback, FolioCraft AI"
+        keywords="Amazon KDP, Trade Paperback, OpusCraft"
       >
         {/* Page 1: Full-color Cover Page (Matches In-App Cover Studio) */}
         {!interiorOnly && (
@@ -511,7 +511,7 @@ export async function GET(
             First Trade Paperback Edition: {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </Text>
           <Text style={styles.copyrightText}>
-            Published by FolioCraft AI Press.
+            Published by OpusCraft Press.
           </Text>
           <Text style={[styles.copyrightText, { marginTop: 12 }]}>
             ISBN-13: 979-8-00000-000-0 (Trade Paperback 6x9)

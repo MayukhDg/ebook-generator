@@ -487,7 +487,7 @@ export default function ChapterOutlineSection({
                 Dynamic Page Alignment Notice
               </div>
               <p className="text-[11px] leading-relaxed">
-                FolioCraft AI automatically verifies exact starting pages by analyzing rendered 6x9 trade paperback typesetting. If you leave page numbers on <strong>Auto</strong>, they will dynamically adjust whenever you edit or expand content. You may also specify manual page number overrides below.
+                OpusCraft automatically verifies exact starting pages by analyzing rendered 6x9 trade paperback typesetting. If you leave page numbers on <strong>Auto</strong>, they will dynamically adjust whenever you edit or expand content. You may also specify manual page number overrides below.
               </p>
             </div>
 

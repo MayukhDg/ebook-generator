@@ -130,7 +130,7 @@ export default function LoginPage() {
               <BookOpen className="h-5 w-5 text-slate-950 stroke-[2.5]" />
             </div>
             <span className="text-xl font-bold tracking-tight text-white">
-              FolioCraft<span className="text-amber-400">.ai</span>
+              OpusCraft<span className="text-amber-400">.ai</span>
             </span>
           </Link>
         </div>

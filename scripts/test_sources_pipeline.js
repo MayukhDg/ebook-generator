@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 async function testPipeline() {
-  console.log('--- Testing Foliocraft AI Source Materials & Knowledge Ingestion Pipeline ---');
+  console.log('--- Testing OpusCraft Source Materials & Knowledge Ingestion Pipeline ---');
 
   // 1. Test pdf-parse directly
   const pdf = require('pdf-parse');

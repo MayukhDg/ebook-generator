@@ -14,10 +14,10 @@ export default function Footer() {
                 <BookOpen className="h-4 w-4 text-white stroke-[2.5]" />
               </div>
               <span className="text-lg font-bold text-gray-900">
-                FolioCraft<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">.ai</span>
+                OpusCraft<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">.ai</span>
               </span>
               <span className="rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
-                AUTHORITY ENGINE
+                EXECUTIVE PUBLISHING STUDIO
               </span>
             </div>
             <p className="max-w-md text-xs leading-relaxed text-gray-400">
@@ -95,9 +95,9 @@ export default function Footer() {
 
         {/* Bottom Legal & Trademark Bar */}
         <div className="mt-12 flex flex-col items-center justify-between border-t border-gray-100 pt-6 text-xs text-gray-400 sm:flex-row">
-          <p>© {new Date().getFullYear()} FolioCraft AI. All rights reserved. Built for published authors.</p>
+          <p>© {new Date().getFullYear()} OpusCraft. All rights reserved. Built for published authors.</p>
           <p className="mt-2 sm:mt-0">
-            Amazon, Kindle, and KDP are registered trademarks of Amazon.com, Inc. FolioCraft AI is independent.
+            Amazon, Kindle, and KDP are registered trademarks of Amazon.com, Inc. OpusCraft is independent.
           </p>
         </div>
       </div>

@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { store } from '@/lib/data/store';
-import { polar, PRICING_PLANS, CREDIT_PACKS, POLAR_PRODUCT_IDS } from '@/lib/polar/config';
+import { dodo, PRICING_PLANS, CREDIT_PACKS, DODO_PRODUCT_IDS } from '@/lib/dodo/config';
 
 function resolveProductType(productId?: string | null): { planId?: string; packId?: string } {
   if (!productId) return {};
-  if (productId === POLAR_PRODUCT_IDS.creator) return { planId: 'creator' };
-  if (productId === POLAR_PRODUCT_IDS.authority) return { planId: 'authority' };
-  if (productId === POLAR_PRODUCT_IDS.topup_50) return { packId: 'topup_50' };
-  if (productId === POLAR_PRODUCT_IDS.topup_150) return { packId: 'topup_150' };
+  if (productId === DODO_PRODUCT_IDS.creator) return { planId: 'creator' };
+  if (productId === DODO_PRODUCT_IDS.authority) return { planId: 'authority' };
+  if (productId === DODO_PRODUCT_IDS.topup_50) return { packId: 'topup_50' };
+  if (productId === DODO_PRODUCT_IDS.topup_150) return { packId: 'topup_150' };
   return {};
 }
 
@@ -22,52 +22,63 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const orgId = process.env.POLAR_ORGANIZATION_ID;
-    if (!orgId) {
-      return NextResponse.json({ error: 'Polar not configured' }, { status: 500 });
+    const dodoApiKey = process.env.DODO_PAYMENTS_API_KEY || process.env.DODO_API_KEY;
+    if (!dodoApiKey || dodoApiKey.includes('mock') || dodoApiKey.includes('placeholder')) {
+      return NextResponse.json({
+        success: true,
+        newlyCredited: 0,
+        newPlan: null,
+        currentBalance: profile.credits_balance,
+        currentTier: profile.subscription_tier,
+        simulated: true,
+      });
     }
 
-    // 1. Fetch recent orders from Polar Sandbox
-    const ordersRes = await polar.orders.list({
-      organizationId: orgId,
-      limit: 20,
+    // 1. Fetch recent payments from Dodo Payments
+    const paymentsRes = await dodo.payments.list({
+      page_size: 20,
     });
 
-    const orders = ordersRes.result?.items || [];
+    const payments = paymentsRes.items || [];
     let newlyCredited = 0;
     let newPlan: string | null = null;
 
     // 2. Fetch existing transactions to avoid double-crediting
     const existingTxs = await store.getCreditTransactions(profile.id);
-    const existingOrderIds = new Set<string>();
+    const existingPaymentIds = new Set<string>();
 
     for (const tx of existingTxs) {
-      const oid = (tx.metadata as any)?.polar_order_id;
-      if (oid) existingOrderIds.add(oid);
+      const pid = (tx.metadata as any)?.dodo_payment_id;
+      if (pid) existingPaymentIds.add(pid);
     }
 
-    // 3. Process any paid order matching this user that hasn't been credited yet
-    for (const order of orders) {
-      if (order.status !== 'paid') continue;
-      if (existingOrderIds.has(order.id)) continue;
+    // 3. Process any succeeded payment matching this user that hasn't been credited yet
+    for (const payment of payments) {
+      if (payment.status !== 'succeeded') continue;
+      if (existingPaymentIds.has(payment.payment_id)) continue;
 
-      const metadata = (order.metadata as Record<string, any>) || {};
-      const orderUserId = metadata.userId || order.customer?.externalId || (order.customer?.metadata as any)?.userId;
+      const metadata = (payment.metadata as Record<string, any>) || {};
+      const paymentUserId = metadata.userId || payment.customer?.customer_id;
 
       // Match user by ID or email
       const isUserMatch = 
-        orderUserId === profile.id || 
-        (order.customer?.email && order.customer.email.toLowerCase() === (profile.email || '').toLowerCase());
+        paymentUserId === profile.id || 
+        (payment.customer?.email && payment.customer.email.toLowerCase() === (profile.email || '').toLowerCase());
       
       if (!isUserMatch) continue;
 
       let planId = metadata.planId;
       let packId = metadata.packId;
 
-      if (!planId && !packId && order.productId) {
-        const resolved = resolveProductType(order.productId);
-        planId = resolved.planId;
-        packId = resolved.packId;
+      if (!planId && !packId) {
+        // Try product_id or product_cart if available
+        const lineItem = (payment as any).product_cart && (payment as any).product_cart[0];
+        const rawProductId = (payment as any).product_id || lineItem?.product_id;
+        if (rawProductId) {
+          const resolved = resolveProductType(rawProductId);
+          planId = resolved.planId;
+          packId = resolved.packId;
+        }
       }
 
       if (planId) {
@@ -77,14 +88,19 @@ export async function GET() {
             profile.id,
             plan.creditsPerMonth,
             'subscription_grant',
-            { plan: plan.id, polar_order_id: order.id, provider: 'polar', synced_on_return: true }
+            {
+              plan: plan.id,
+              dodo_payment_id: payment.payment_id,
+              provider: 'dodo',
+              synced_on_return: true,
+            }
           );
           if (plan.id === 'creator' || plan.id === 'authority') {
-            await store.updateSubscriptionTier(profile.id, plan.id as any);
+            await store.updateSubscriptionTier(profile.id, plan.id as any, payment.customer?.customer_id);
             newPlan = plan.name;
           }
           newlyCredited += plan.creditsPerMonth;
-          existingOrderIds.add(order.id);
+          existingPaymentIds.add(payment.payment_id);
         }
       } else if (packId) {
         const pack = CREDIT_PACKS.find((p) => p.id === packId);
@@ -93,10 +109,15 @@ export async function GET() {
             profile.id,
             pack.credits,
             'credit_purchase',
-            { pack: pack.id, polar_order_id: order.id, provider: 'polar', synced_on_return: true }
+            {
+              pack: pack.id,
+              dodo_payment_id: payment.payment_id,
+              provider: 'dodo',
+              synced_on_return: true,
+            }
           );
           newlyCredited += pack.credits;
-          existingOrderIds.add(order.id);
+          existingPaymentIds.add(payment.payment_id);
         }
       }
     }
@@ -111,8 +132,8 @@ export async function GET() {
       currentTier: updatedProfile?.subscription_tier,
     });
   } catch (error: any) {
-    console.error('Error syncing Polar orders:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Error syncing Dodo Payments:', error);
+    return NextResponse.json({ error: error?.message || 'Failed to sync payments' }, { status: 500 });
   }
 }
 

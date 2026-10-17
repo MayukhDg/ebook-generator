@@ -18,11 +18,11 @@ export async function generateMetadata({
   if (!post) return {};
 
   return {
-    title: `${post.title} | FolioCraft AI`,
+    title: `${post.title} | OpusCraft`,
     description: post.meta_description,
     keywords: post.target_keywords,
     alternates: {
-      canonical: post.canonical_url || `https://foliocraft.ai/blog/${post.slug}`,
+      canonical: post.canonical_url || `https://opuscraft.ai/blog/${post.slug}`,
     },
     openGraph: {
       title: post.title,
@@ -56,20 +56,20 @@ export default async function BlogPostPage({
     dateModified: post.published_at,
     author: {
       '@type': 'Organization',
-      name: 'FolioCraft AI Research Team',
-      url: 'https://foliocraft.ai',
+      name: 'OpusCraft Research Team',
+      url: 'https://opuscraft.ai',
     },
     publisher: {
       '@type': 'Organization',
-      name: 'FolioCraft AI',
+      name: 'OpusCraft',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://foliocraft.ai/logo.png',
+        url: 'https://opuscraft.ai/logo.png',
       },
     },
     mainEntityOfPage: {
       '@type': 'WebPage',
-      '@id': post.canonical_url || `https://foliocraft.ai/blog/${post.slug}`,
+      '@id': post.canonical_url || `https://opuscraft.ai/blog/${post.slug}`,
     },
   };
 
@@ -130,7 +130,7 @@ export default async function BlogPostPage({
             <Sparkles className="h-3.5 w-3.5" /> Stop Writing AI Slop
           </div>
           <h3 className="text-xl sm:text-2xl font-extrabold text-white">
-            Publish your authority book in an afternoon with FolioCraft AI.
+            Publish your authority book in an afternoon with OpusCraft.
           </h3>
           <p className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto">
             Ingest voice memos, synthesize an 8-chapter blueprint with strict context memory, design crisp vector covers, and export 1-click Amazon KDP trade paperback PDFs.

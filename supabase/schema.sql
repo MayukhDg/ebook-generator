@@ -1,5 +1,5 @@
 -- ==============================================================================
--- FolioCraft AI: Complete Supabase Production Schema & Setup
+-- OpusCraft: Complete Supabase Production Schema & Setup
 -- Copy and paste this entire script into your Supabase SQL Editor and click RUN.
 -- ==============================================================================
 
@@ -18,11 +18,15 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     full_name TEXT,
     credits_balance INTEGER NOT NULL DEFAULT 20 CHECK (credits_balance >= 0),
     subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free', 'creator', 'authority', 'enterprise')),
-    stripe_customer_id TEXT UNIQUE,
-    stripe_subscription_id TEXT,
+    dodo_customer_id TEXT UNIQUE,
+    dodo_subscription_id TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Migration safety for existing installations
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS dodo_customer_id TEXT UNIQUE;
+ALTER TABLE IF EXISTS public.profiles ADD COLUMN IF NOT EXISTS dodo_subscription_id TEXT;
 
 -- ------------------------------------------------------------------------------
 -- 2. Books Table (Authority Book Projects)
@@ -106,6 +110,7 @@ CREATE TABLE IF NOT EXISTS public.credit_transactions (
         'chapter_generation',
         'chapter_revision',
         'audio_transcription',
+        'document_ingestion',
         'cover_generation',
         'illustration_generation',
         'credit_purchase'

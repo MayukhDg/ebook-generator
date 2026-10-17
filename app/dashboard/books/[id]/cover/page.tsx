@@ -5,7 +5,7 @@ import { store } from '@/lib/data/store';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import CoverDesigner from '@/components/studio/CoverDesigner';
-import { ChevronLeft, BookOpen, Layers, Printer, FileDown } from 'lucide-react';
+import { ChevronLeft, BookOpen, Layers, Printer, FileDown, ImageIcon } from 'lucide-react';
 
 export default async function BookCoverPage({ params }: { params: { id: string } }) {
   const book = await store.getBookById(params.id);
@@ -48,6 +48,14 @@ export default async function BookCoverPage({ params }: { params: { id: string }
             >
               <ChevronLeft className="h-3.5 w-3.5" /> Back to Outline
             </Link>
+            <a
+              href={`/api/books/${book.id}/export/cover`}
+              download
+              className="flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-slate-950 hover:bg-emerald-400 transition-all shadow-md shadow-emerald-500/20"
+              title="Download high-resolution 1600x2560 300 DPI Cover JPG"
+            >
+              <ImageIcon className="h-3.5 w-3.5" /> Download Cover (JPG)
+            </a>
             <a
               href={`/api/books/${book.id}/export/pdf`}
               download

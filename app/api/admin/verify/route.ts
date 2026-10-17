@@ -24,13 +24,13 @@ export async function POST(req: NextRequest) {
 
     // Generate a hashed token from the secret + a static salt
     const token = createHash('sha256')
-      .update(`foliocraft_admin_${adminSecret}_salt_v1`)
+      .update(`opuscraft_admin_${adminSecret}_salt_v1`)
       .digest('hex');
 
     const response = NextResponse.json({ success: true });
 
     // Set session cookie (no expiry = browser session only)
-    response.cookies.set('foliocraft_admin_token', token, {
+    response.cookies.set('opuscraft_admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -53,7 +53,7 @@ export default function AdminGatePage() {
               <BookOpen className="h-5 w-5 text-white stroke-[2.5]" />
             </div>
             <span className="text-xl font-bold tracking-tight text-gray-900">
-              FolioCraft<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">.ai</span>
+              OpusCraft<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">.ai</span>
             </span>
           </Link>
         </div>

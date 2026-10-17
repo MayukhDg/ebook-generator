@@ -60,12 +60,12 @@ class ProductionDataStore {
     // Default clean profile for development
     return {
       id: targetUserId || '00000000-0000-0000-0000-000000000001',
-      email: 'author@foliocraft.ai',
+      email: 'author@opuscraft.ai',
       full_name: 'Author',
       credits_balance: 20,
       subscription_tier: 'free',
-      stripe_customer_id: null,
-      stripe_subscription_id: null,
+      dodo_customer_id: null,
+      dodo_subscription_id: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
@@ -91,6 +91,7 @@ class ProductionDataStore {
         'chapter_generation',
         'chapter_revision',
         'audio_transcription',
+        'document_ingestion',
         'cover_generation',
         'illustration_generation',
         'credit_purchase',
@@ -208,10 +209,10 @@ class ProductionDataStore {
         updated_at: new Date().toISOString(),
       };
       if (customerId) {
-        updateData.stripe_customer_id = customerId;
+        updateData.dodo_customer_id = customerId;
       }
       if (subscriptionId) {
-        updateData.stripe_subscription_id = subscriptionId;
+        updateData.dodo_subscription_id = subscriptionId;
       }
 
       const { error } = await adminClient

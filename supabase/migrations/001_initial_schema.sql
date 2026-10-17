@@ -1,5 +1,5 @@
 -- ==============================================================================
--- 001_initial_schema.sql: FolioCraft AI Database Schema & Core Functions
+-- 001_initial_schema.sql: OpusCraft Database Schema & Core Functions
 -- ==============================================================================
 
 -- Enable UUID extension if not already enabled
@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     full_name TEXT,
     credits_balance INTEGER NOT NULL DEFAULT 20 CHECK (credits_balance >= 0),
     subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free', 'creator', 'authority', 'enterprise')),
-    stripe_customer_id TEXT UNIQUE,
-    stripe_subscription_id TEXT,
+    dodo_customer_id TEXT UNIQUE,
+    dodo_subscription_id TEXT,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -101,6 +101,7 @@ CREATE TABLE IF NOT EXISTS public.credit_transactions (
         'chapter_generation',
         'chapter_revision',
         'audio_transcription',
+        'document_ingestion',
         'cover_generation',
         'illustration_generation',
         'credit_purchase'

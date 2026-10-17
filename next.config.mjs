@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  experimental: {
+    serverComponentsExternalPackages: ['sharp', '@react-pdf/renderer'],
+  },
   images: {
     remotePatterns: [
       {
@@ -18,3 +21,4 @@ const nextConfig = {
 };
 
 export default nextConfig;
+

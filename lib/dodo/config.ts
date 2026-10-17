@@ -1,4 +1,4 @@
-import { Polar } from '@polar-sh/sdk';
+import DodoPayments from 'dodopayments';
 
 export interface PricingPlan {
   id: string;
@@ -6,8 +6,7 @@ export interface PricingPlan {
   tagline: string;
   priceMonthly: number;
   creditsPerMonth: number;
-  polarProductId: string;
-  stripePriceId?: string; // backwards compatibility
+  dodoProductId: string;
   isPopular?: boolean;
   features: string[];
 }
@@ -17,23 +16,23 @@ export interface CreditPack {
   name: string;
   price: number;
   credits: number;
-  polarProductId: string;
-  stripePriceId?: string; // backwards compatibility
+  dodoProductId: string;
   description: string;
 }
 
-// Polar SDK instance singleton
-export const polar = new Polar({
-  accessToken: process.env.POLAR_ACCESS_TOKEN || '',
-  server: (process.env.POLAR_ENVIRONMENT === 'production' ? 'production' : 'sandbox') as 'production' | 'sandbox',
+// Dodo Payments SDK instance singleton
+export const dodo = new DodoPayments({
+  bearerToken: process.env.DODO_PAYMENTS_API_KEY || process.env.DODO_API_KEY || '',
+  environment: (process.env.DODO_PAYMENTS_ENVIRONMENT === 'live_mode' ? 'live_mode' : 'test_mode') as 'test_mode' | 'live_mode',
+  webhookKey: process.env.DODO_PAYMENTS_WEBHOOK_KEY || process.env.DODO_WEBHOOK_SECRET || '',
 });
 
-// Product IDs mapped to Polar products created in Polar dashboard
-export const POLAR_PRODUCT_IDS = {
-  creator: process.env.POLAR_PRODUCT_CREATOR || '',
-  authority: process.env.POLAR_PRODUCT_AUTHORITY || '',
-  topup_50: process.env.POLAR_PRODUCT_TOPUP_50 || '',
-  topup_150: process.env.POLAR_PRODUCT_TOPUP_150 || '',
+// Product IDs mapped to Dodo Payments products created in Dodo Payments dashboard
+export const DODO_PRODUCT_IDS = {
+  creator: process.env.DODO_PRODUCT_CREATOR || process.env.DODO_PAYMENTS_PRODUCT_CREATOR || '',
+  authority: process.env.DODO_PRODUCT_AUTHORITY || process.env.DODO_PAYMENTS_PRODUCT_AUTHORITY || '',
+  topup_50: process.env.DODO_PRODUCT_TOPUP_50 || process.env.DODO_PAYMENTS_PRODUCT_TOPUP_50 || '',
+  topup_150: process.env.DODO_PRODUCT_TOPUP_150 || process.env.DODO_PAYMENTS_PRODUCT_TOPUP_150 || '',
 };
 
 export const PRICING_PLANS: PricingPlan[] = [
@@ -43,27 +42,25 @@ export const PRICING_PLANS: PricingPlan[] = [
     tagline: 'Test drive the authority engine with zero risk',
     priceMonthly: 0,
     creditsPerMonth: 20,
-    polarProductId: '',
-    stripePriceId: '',
+    dodoProductId: '',
     features: [
       '20 Free Welcome Credits (1 Blueprint + 2 Chapters + 1 Cover)',
       'Global Memory Blueprint Generator',
       'Split-Screen Chapter Studio',
       'Web Reader Preview',
-      'Standard Export with FolioCraft Watermark',
+      'Standard Export with OpusCraft Watermark',
     ],
   },
   {
     id: 'creator',
     name: 'Authority Creator',
     tagline: 'For consultants & founders writing high-ticket IP books',
-    priceMonthly: 29,
-    creditsPerMonth: 150,
-    polarProductId: POLAR_PRODUCT_IDS.creator,
-    stripePriceId: process.env.STRIPE_PRICE_CREATOR || 'price_creator_monthly',
+    priceMonthly: 25,
+    creditsPerMonth: 120,
+    dodoProductId: DODO_PRODUCT_IDS.creator,
     isPopular: true,
     features: [
-      '150 Credits / Month (Up to 2 full 10-chapter books)',
+      '120 Credits / Month (Up to 2 full 10-chapter books)',
       'Priority GPT-4o Generation & Streaming',
       'OpenAI Whisper Audio Transcription',
       '6x9 Trade Paperback KDP-Compliant PDF',
@@ -77,12 +74,11 @@ export const PRICING_PLANS: PricingPlan[] = [
     id: 'authority',
     name: 'Agency Operator',
     tagline: 'For high-output ghostwriters, agencies & publishers',
-    priceMonthly: 79,
-    creditsPerMonth: 500,
-    polarProductId: POLAR_PRODUCT_IDS.authority,
-    stripePriceId: process.env.STRIPE_PRICE_AUTHORITY || 'price_authority_monthly',
+    priceMonthly: 65,
+    creditsPerMonth: 400,
+    dodoProductId: DODO_PRODUCT_IDS.authority,
     features: [
-      '500 Credits / Month (Up to 7 complete books per month)',
+      '400 Credits / Month (Up to 7 complete books per month)',
       'All Creator Features Included',
       '300 DPI CMYK KDP Full-Wrap PDF with Custom Bleed',
       'Dynamic Spine Width & Barcode Area Positioning',
@@ -97,19 +93,17 @@ export const CREDIT_PACKS: CreditPack[] = [
   {
     id: 'topup_50',
     name: '50 Credit Top-Up',
-    price: 19,
+    price: 10,
     credits: 50,
-    polarProductId: POLAR_PRODUCT_IDS.topup_50,
-    stripePriceId: process.env.STRIPE_PRICE_TOPUP_50 || 'price_topup_50',
+    dodoProductId: DODO_PRODUCT_IDS.topup_50,
     description: 'Perfect for drafting 8 extra chapters or exploring multiple AI cover iterations.',
   },
   {
     id: 'topup_150',
     name: '150 Credit Booster',
-    price: 49,
+    price: 20,
     credits: 150,
-    polarProductId: POLAR_PRODUCT_IDS.topup_150,
-    stripePriceId: process.env.STRIPE_PRICE_TOPUP_150 || 'price_topup_150',
+    dodoProductId: DODO_PRODUCT_IDS.topup_150,
     description: 'Add a full book project with illustrations and KDP wrap renders.',
   },
 ];

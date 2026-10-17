@@ -4,19 +4,19 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { 
-  BookOpen, 
-  Sparkles, 
-  ArrowRight, 
-  Check, 
-  X as CloseIcon, 
-  ShieldCheck, 
-  Mic, 
-  Layers, 
-  Palette, 
-  Printer, 
-  FileCheck, 
-  Cpu, 
+import {
+  BookOpen,
+  Sparkles,
+  ArrowRight,
+  Check,
+  X as CloseIcon,
+  ShieldCheck,
+  Mic,
+  Layers,
+  Palette,
+  Printer,
+  FileCheck,
+  Cpu,
   HelpCircle,
   Coins,
   ChevronDown,
@@ -26,7 +26,7 @@ import {
   Brain,
   PenTool
 } from 'lucide-react';
-import { PRICING_PLANS, CREDIT_PACKS } from '@/lib/polar/config';
+import { PRICING_PLANS, CREDIT_PACKS } from '@/lib/dodo/config';
 
 export default function HomePage() {
   const [activeStep, setActiveStep] = useState<number>(1);
@@ -58,19 +58,19 @@ export default function HomePage() {
   const faqs = [
     {
       q: 'Do I own 100% of the copyright and commercial rights to my book?',
-      a: 'Yes, absolutely. Unlike predatory publishers, FolioCraft AI claims zero equity, royalties, or copyright ownership over your work. Everything you create—from the manuscript and cover art to the KDP print wraps and EPUB packages—is 100% your proprietary intellectual property.',
+      a: 'Yes, absolutely. Unlike predatory publishers, OpusCraft claims zero equity, royalties, or copyright ownership over your work. Everything you create—from the manuscript and cover art to the KDP print wraps and EPUB packages—is 100% your proprietary intellectual property.',
     },
     {
-      q: 'Will Amazon KDP flag or ban books written with FolioCraft AI?',
-      a: 'No. Amazon KDP allows AI-assisted books provided authors disclose AI usage and adhere to quality guidelines. The reason raw ChatGPT books get banned is low-effort copy-pasting, repetitive hallucinations, and unformatted PDFs. FolioCraft AI enforces human co-authorship, grounds synthesis in your authentic voice transcripts, and produces professional 6x9 trade paperbacks passing all KDP print specifications.',
+      q: 'Will Amazon KDP flag or ban books written with OpusCraft?',
+      a: 'No. Amazon KDP allows AI-assisted books provided authors disclose AI usage and adhere to quality guidelines. The reason raw ChatGPT books get banned is low-effort copy-pasting, repetitive hallucinations, and unformatted PDFs. OpusCraft enforces human co-authorship, grounds synthesis in your authentic voice transcripts, and produces professional 6x9 trade paperbacks passing all KDP print specifications.',
     },
     {
       q: 'How does the Two-Layer Cover Studio solve the "AI spelling hallucination" defect?',
-      a: 'Image generation models (like DALL-E and Midjourney) are probabilistic pixel predictors, meaning they invariably hallucinate garbled pseudo-letters. FolioCraft AI decouples the process: DALL-E 3 renders pristine, negative-space background textures, and our vector typography engine composites crisp, crisp fonts (Inter, Playfair Display, Space Grotesk) on top with mathematical spine precision.',
+      a: 'Image generation models (like DALL-E and Midjourney) are probabilistic pixel predictors, meaning they invariably hallucinate garbled pseudo-letters. OpusCraft decouples the process: DALL-E 3 renders pristine, negative-space background textures, and our vector typography engine composites crisp, crisp fonts (Inter, Playfair Display, Space Grotesk) on top with mathematical spine precision.',
     },
     {
       q: 'How does Global Outline Memory prevent context drift by Chapter 5?',
-      a: 'When you generate a book outline, FolioCraft AI initializes an immutable Global Context Object containing your target reader persona, central thesis, coined terminology, and rolling 100-word abstracts of every previous chapter. When Chapter 5 streams, it already knows exactly what was established in Chapters 1 through 4.',
+      a: 'When you generate a book outline, OpusCraft initializes an immutable Global Context Object containing your target reader persona, central thesis, coined terminology, and rolling 100-word abstracts of every previous chapter. When Chapter 5 streams, it already knows exactly what was established in Chapters 1 through 4.',
     },
     {
       q: 'How do credits work, and can I top-up without a subscription?',
@@ -92,7 +92,9 @@ export default function HomePage() {
           {/* Authority Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/80 backdrop-blur-sm px-4 py-1.5 text-xs font-semibold text-orange-700 shadow-sm">
             <Sparkles className="h-4 w-4 text-orange-500" />
-            <span>The Anti-Slop Authority Engine for Founders & Consultants</span>
+            <span className="font-bold">OpusCraft</span>
+            <span className="text-orange-400">•</span>
+            <span>The Executive Publishing Studio</span>
           </div>
 
           {/* Master Headline */}
@@ -100,9 +102,8 @@ export default function HomePage() {
             Turn Your Real-World{' '}
             <br className="hidden sm:block" />
             Expertise Into An{' '}
-            <span className="text-gradient-coral">Authoritative Book.</span>
+            <span className="text-gradient-coral">Authoritative Digital Asset.</span>
             <br />
-            <span className="text-gray-400 font-bold">In An Afternoon.</span>
           </h1>
 
           {/* Subheadline */}
@@ -159,7 +160,7 @@ export default function HomePage() {
               Why Raw ChatGPT Fails at Book Publishing
             </h2>
             <p className="text-sm sm:text-base text-gray-500 max-w-2xl mx-auto">
-              LLMs in raw chat windows degrade non-linearly over long sequences. Here is how FolioCraft AI's Authority Engine replaces context drift with surgical memory.
+              LLMs in raw chat windows degrade non-linearly over long sequences. Here is how OpusCraft's Authority Engine replaces context drift with surgical memory.
             </p>
           </div>
 
@@ -175,7 +176,7 @@ export default function HomePage() {
                     Raw ChatGPT / 1-Click Spam
                   </th>
                   <th className="py-4 px-6 text-xs font-bold text-orange-600 uppercase tracking-wider w-3/8 bg-orange-50/40">
-                    FolioCraft AI Authority Engine
+                    OpusCraft Authority Engine
                   </th>
                 </tr>
               </thead>
@@ -281,11 +282,10 @@ export default function HomePage() {
                 <button
                   key={s.num}
                   onClick={() => setActiveStep(s.num)}
-                  className={`p-4 rounded-2xl border text-left transition-all ${
-                    activeStep === s.num
-                      ? 'border-orange-300 bg-white shadow-warm'
-                      : 'border-gray-200/60 bg-white/50 hover:border-gray-300 hover:bg-white/80'
-                  }`}
+                  className={`p-4 rounded-2xl border text-left transition-all ${activeStep === s.num
+                    ? 'border-orange-300 bg-white shadow-warm'
+                    : 'border-gray-200/60 bg-white/50 hover:border-gray-300 hover:bg-white/80'
+                    }`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <Icon className={`h-4 w-4 ${activeStep === s.num ? 'text-orange-500' : 'text-gray-400'}`} />
@@ -308,7 +308,7 @@ export default function HomePage() {
                   Speak Your Masterclass or Drop Recorded Client Calls
                 </h3>
                 <p className="text-gray-500 text-sm leading-relaxed max-w-3xl">
-                  You already explain your methodology every week on Zoom calls. FolioCraft AI ingests audio files (MP3, WAV, M4A) via OpenAI Whisper, indexing your frameworks directly into an immutable Source Materials Vault. The engine synthesizes your insights into an 8-to-10 chapter blueprint with coined nomenclature.
+                  You already explain your methodology every week on Zoom calls. OpusCraft ingests audio files (MP3, WAV, M4A) via OpenAI Whisper, indexing your frameworks directly into an immutable Source Materials Vault. The engine synthesizes your insights into an 8-to-10 chapter blueprint with coined nomenclature.
                 </p>
                 <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-4 font-mono text-xs text-emerald-700">
                   ✓ Whisper Transcription Completed: "The Sovereign Operating Stack" (3 Credits Deducted)
@@ -382,11 +382,10 @@ export default function HomePage() {
             {PRICING_PLANS.map((plan) => (
               <div
                 key={plan.id}
-                className={`relative rounded-3xl p-7 flex flex-col justify-between transition-all ${
-                  plan.isPopular
-                    ? 'border-2 border-orange-400 bg-white shadow-warm md:-translate-y-2'
-                    : 'border border-gray-200 bg-white/80 hover:shadow-card'
-                }`}
+                className={`relative rounded-3xl p-7 flex flex-col justify-between transition-all ${plan.isPopular
+                  ? 'border-2 border-orange-400 bg-white shadow-warm md:-translate-y-2'
+                  : 'border border-gray-200 bg-white/80 hover:shadow-card'
+                  }`}
               >
                 {plan.isPopular && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-orange-500 to-rose-500 px-4 py-1 text-[11px] font-bold uppercase tracking-wider text-white shadow-md">
@@ -430,11 +429,10 @@ export default function HomePage() {
                   <button
                     onClick={() => handleCheckout(plan.id)}
                     disabled={isCheckoutLoading === plan.id}
-                    className={`w-full py-3 rounded-full text-xs font-bold transition-all shadow-md cursor-pointer ${
-                      plan.isPopular
-                        ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                    className={`w-full py-3 rounded-full text-xs font-bold transition-all shadow-md cursor-pointer ${plan.isPopular
+                      ? 'bg-gradient-to-r from-orange-500 to-rose-500 text-white shadow-orange-500/20 hover:shadow-lg hover:shadow-orange-500/30'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                   >
                     {isCheckoutLoading === plan.id ? 'Connecting...' : plan.priceMonthly === 0 ? 'Start Writing Free' : `Upgrade to ${plan.name}`}
                   </button>

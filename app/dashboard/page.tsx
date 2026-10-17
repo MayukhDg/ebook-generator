@@ -54,10 +54,16 @@ export default function DashboardPage() {
   useEffect(() => {
     async function loadDashboardData() {
       try {
-        // Sync any recent Polar checkout when returning with success query param
+        // Sync any recent Dodo Payments checkout when returning with success query param
         if (typeof window !== 'undefined') {
           const params = new URLSearchParams(window.location.search);
-          if (params.get('payment') === 'success' || params.get('checkout_id')) {
+          if (
+            params.get('payment') === 'success' ||
+            params.get('checkout_id') ||
+            params.get('payment_id') ||
+            params.get('status') === 'succeeded' ||
+            params.get('simulated') === 'true'
+          ) {
             try {
               const syncRes = await fetch('/api/checkout/sync', { method: 'POST' });
               if (syncRes.ok) {
@@ -436,13 +442,24 @@ export default function DashboardPage() {
                         </Link>
                       </div>
 
-                      <a
-                        href={`/api/books/${b.id}/export/pdf`}
-                        download
-                        className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors"
-                      >
-                        <Printer className="h-3.5 w-3.5" /> PDF
-                      </a>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`/api/books/${b.id}/export/cover`}
+                          download
+                          title="Download high-resolution Cover JPG"
+                          className="flex items-center gap-1 text-xs text-gray-400 hover:text-emerald-500 transition-colors"
+                        >
+                          <ImageIcon className="h-3.5 w-3.5 text-emerald-500/80" /> Cover JPG
+                        </a>
+                        <span className="text-gray-300">·</span>
+                        <a
+                          href={`/api/books/${b.id}/export/pdf`}
+                          download
+                          className="flex items-center gap-1 text-xs text-gray-400 hover:text-orange-500 transition-colors"
+                        >
+                          <Printer className="h-3.5 w-3.5" /> PDF
+                        </a>
+                      </div>
                     </div>
                   </div>
                 ))}

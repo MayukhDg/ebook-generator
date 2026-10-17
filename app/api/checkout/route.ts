@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { polar, PRICING_PLANS, CREDIT_PACKS } from '@/lib/polar/config';
+import { dodo, PRICING_PLANS, CREDIT_PACKS } from '@/lib/dodo/config';
 import { store } from '@/lib/data/store';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
@@ -16,14 +16,14 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id || '';
 
-    const polarToken = process.env.POLAR_ACCESS_TOKEN;
-    const isRealPolar = polarToken && !polarToken.includes('mock') && polarToken.trim().length > 10;
+    const dodoApiKey = process.env.DODO_PAYMENTS_API_KEY || process.env.DODO_API_KEY;
+    const isRealDodo = dodoApiKey && !dodoApiKey.includes('mock') && !dodoApiKey.includes('placeholder') && dodoApiKey.trim().length > 10;
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const fallbackSuccess = successUrl || `${appUrl}/dashboard?payment=success`;
     const fallbackCancel = cancelUrl || `${appUrl}/#pricing`;
 
-    if (isRealPolar) {
+    if (isRealDodo) {
       let productId = '';
 
       if (resolvedPlanId) {
@@ -31,11 +31,11 @@ export async function POST(req: NextRequest) {
         if (!plan) {
           return NextResponse.json({ error: `Invalid plan ID: ${resolvedPlanId}` }, { status: 400 });
         }
-        productId = plan.polarProductId;
+        productId = plan.dodoProductId || '';
         if (!productId) {
           return NextResponse.json(
             { 
-              error: `Polar Product ID for plan "${resolvedPlanId}" is not configured. Please set POLAR_PRODUCT_${resolvedPlanId.toUpperCase()} in your .env.local file.` 
+              error: `Dodo Payments Product ID for plan "${resolvedPlanId}" is not configured. Please set DODO_PRODUCT_${resolvedPlanId.toUpperCase()} in your .env.local file.` 
             }, 
             { status: 500 }
           );
@@ -45,11 +45,11 @@ export async function POST(req: NextRequest) {
         if (!pack) {
           return NextResponse.json({ error: `Invalid credit pack ID: ${resolvedPackId}` }, { status: 400 });
         }
-        productId = pack.polarProductId;
+        productId = pack.dodoProductId || '';
         if (!productId) {
           return NextResponse.json(
             { 
-              error: `Polar Product ID for pack "${resolvedPackId}" is not configured. Please set POLAR_PRODUCT_${resolvedPackId.toUpperCase()} in your .env.local file.` 
+              error: `Dodo Payments Product ID for pack "${resolvedPackId}" is not configured. Please set DODO_PRODUCT_${resolvedPackId.toUpperCase()} in your .env.local file.` 
             }, 
             { status: 500 }
           );
@@ -58,31 +58,37 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Neither planId nor packId was provided' }, { status: 400 });
       }
 
-      // Add checkout_id placeholder polar replaces on redirect
-      const successUrlWithId = fallbackSuccess.includes('?')
-        ? `${fallbackSuccess}&checkout_id={CHECKOUT_ID}`
-        : `${fallbackSuccess}?checkout_id={CHECKOUT_ID}`;
-
-      // Construct metadata with only non-empty values (Polar requires string length >= 1)
+      // Construct metadata with string values for tracking
       const metadata: Record<string, string> = {};
       if (userId) metadata.userId = userId;
       if (resolvedPlanId) metadata.planId = resolvedPlanId;
       if (resolvedPackId) metadata.packId = resolvedPackId;
 
-      // Create Polar Checkout Session
-      const checkout = await polar.checkouts.create({
-        products: [productId],
-        successUrl: successUrlWithId,
-        returnUrl: fallbackCancel,
-        customerEmail: user?.email || undefined,
-        externalCustomerId: userId || undefined,
+      // Create Dodo Payments Checkout Session
+      const session = await dodo.checkoutSessions.create({
+        product_cart: [
+          {
+            product_id: productId,
+            quantity: 1,
+          },
+        ],
+        return_url: fallbackSuccess,
+        cancel_url: fallbackCancel,
+        customer: user?.email ? {
+          email: user.email,
+          name: (user.user_metadata as any)?.full_name || user.email.split('@')[0],
+        } : undefined,
         metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
       });
 
-      return NextResponse.json({ url: checkout.url });
+      if (!session.checkout_url) {
+        throw new Error('No checkout URL returned from Dodo Payments session');
+      }
+
+      return NextResponse.json({ url: session.checkout_url, sessionId: session.session_id });
     } else {
       // Instant Sandbox / Local Mode Simulation
-      // In local mode without active Polar credentials, grant credits directly so user flow works 100%
+      // In local mode without active Dodo credentials, grant credits directly so user flow works 100%
       const targetUserId = userId || '00000000-0000-0000-0000-000000000001';
 
       if (resolvedPlanId) {
@@ -92,7 +98,7 @@ export async function POST(req: NextRequest) {
             targetUserId,
             plan.creditsPerMonth,
             'subscription_grant',
-            { plan: plan.id, simulated: true, provider: 'polar' }
+            { plan: plan.id, simulated: true, provider: 'dodo' }
           );
           if (plan.id === 'creator' || plan.id === 'authority') {
             await store.updateSubscriptionTier(targetUserId, plan.id as any);
@@ -105,7 +111,7 @@ export async function POST(req: NextRequest) {
             targetUserId,
             pack.credits,
             'credit_purchase',
-            { pack: pack.id, simulated: true, provider: 'polar' }
+            { pack: pack.id, simulated: true, provider: 'dodo' }
           );
         }
       }
@@ -117,11 +123,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         url: redirectUrl,
         simulated: true,
-        message: 'Sandbox payment completed. Credits credited to test account.',
+        message: 'Dodo Payments sandbox simulation completed. Credits credited to test account.',
       });
     }
   } catch (error: any) {
-    console.error('Polar checkout creation error:', error);
-    return NextResponse.json({ error: error.message || 'Failed to create checkout session' }, { status: 500 });
+    console.error('Dodo Payments checkout creation error:', error);
+    return NextResponse.json(
+      { error: error?.message || 'Failed to create Dodo Payments checkout session' },
+      { status: 500 }
+    );
   }
 }

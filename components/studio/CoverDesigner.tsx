@@ -50,6 +50,8 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
   const [isGeneratingBg, setIsGeneratingBg] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [isDownloadingJpg, setIsDownloadingJpg] = useState(false);
+  const [downloadSuccess, setDownloadSuccess] = useState<string | null>(null);
 
   const [stylePreset, setStylePreset] = useState<string>(book.cover_style_config?.template || 'bold_founder');
   const [fontFamily, setFontFamily] = useState<string>(book.cover_style_config?.font_family || 'Space Grotesk');
@@ -203,6 +205,63 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
       console.error('Failed to generate cover art:', err);
     } finally {
       setIsGeneratingBg(false);
+    }
+  };
+
+  const handleDownloadJpg = async (mode: 'front' | 'wrap' = viewMode) => {
+    setIsDownloadingJpg(true);
+    try {
+      await handleSaveCover();
+      const res = await fetch(`/api/books/${book.id}/export/cover`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode,
+          title: titleText,
+          subtitle: subtitleText,
+          authorName,
+          coreThesis: book.core_thesis,
+          bgUrl,
+          styleConfig: {
+            template: stylePreset,
+            font_family: fontFamily,
+            title_color: titleColor,
+            subtitle_color: subtitleColor,
+            accent_color: accentColor,
+            title_position: titlePosition,
+            title_align: titleAlign,
+            title_offset_y: titleOffsetY,
+            show_badge: showBadge,
+            overlay_opacity: overlayOpacity,
+          },
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to download cover JPG');
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const cleanTitle = (titleText || book.title || 'book')
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 50);
+      link.download = `${cleanTitle}-${mode === 'wrap' ? 'full-wrap' : 'cover'}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      setDownloadSuccess(mode === 'wrap' ? 'Full wrap JPG downloaded!' : 'Cover JPG downloaded!');
+      setTimeout(() => setDownloadSuccess(null), 3500);
+    } catch (err) {
+      console.error('Download cover JPG error:', err);
+      alert('Failed to generate cover JPG. Please try again.');
+    } finally {
+      setIsDownloadingJpg(false);
     }
   };
 
@@ -583,6 +642,50 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
           )}
         </button>
 
+        {/* Direct JPG Export Card */}
+        <div className="rounded-xl border border-gray-200/80 bg-white p-3.5 space-y-2.5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+              <ImageIcon className="h-3.5 w-3.5 text-orange-500" />
+              Direct JPG Export
+            </span>
+            <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+              300 DPI High-Res
+            </span>
+          </div>
+          <p className="text-[11px] text-gray-500 leading-normal">
+            Download crisp, production-ready JPGs directly to your device for Amazon KDP, Apple Books, and marketing assets.
+          </p>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => handleDownloadJpg('front')}
+              disabled={isDownloadingJpg}
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 py-2 px-2 text-xs font-semibold text-gray-700 transition-all cursor-pointer disabled:opacity-50"
+            >
+              {isDownloadingJpg ? (
+                <RefreshCw className="h-3 w-3 animate-spin text-orange-500" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              Front Cover (JPG)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleDownloadJpg('wrap')}
+              disabled={isDownloadingJpg}
+              className="flex items-center justify-center gap-1.5 rounded-lg border border-gray-200 bg-gray-50 hover:bg-orange-50 hover:border-orange-200 hover:text-orange-600 py-2 px-2 text-xs font-semibold text-gray-700 transition-all cursor-pointer disabled:opacity-50"
+            >
+              {isDownloadingJpg ? (
+                <RefreshCw className="h-3 w-3 animate-spin text-orange-500" />
+              ) : (
+                <Download className="h-3.5 w-3.5" />
+              )}
+              Full Wrap (JPG)
+            </button>
+          </div>
+        </div>
+
         {/* AI Background Generator CTA with Custom Prompt */}
         <div className="rounded-xl border border-orange-100 bg-orange-50/40 p-3.5 space-y-3">
           <div className="flex items-center justify-between">
@@ -646,6 +749,30 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
       <div className="flex-1 flex flex-col items-center justify-center bg-gray-900/95 border border-gray-200/60 rounded-2xl p-6 relative w-full overflow-hidden min-h-[640px] shadow-card">
         {/* Canvas Toolbar */}
         <div className="absolute top-4 right-4 flex flex-wrap items-center gap-2 z-20">
+          {downloadSuccess && (
+            <div className="flex items-center gap-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/40 px-3 py-1 text-xs font-semibold text-emerald-300 shadow-sm animate-in fade-in">
+              <Check className="h-3.5 w-3.5 text-emerald-400" />
+              {downloadSuccess}
+            </div>
+          )}
+          <button
+            onClick={() => handleDownloadJpg(viewMode)}
+            disabled={isDownloadingJpg}
+            className="flex items-center gap-1.5 rounded-full bg-emerald-500 hover:bg-emerald-400 px-3.5 py-1.5 text-xs font-bold text-slate-950 hover:shadow-md shadow-emerald-500/25 transition-all cursor-pointer disabled:opacity-50"
+            title={`Download high-resolution 300 DPI JPG of ${viewMode === 'wrap' ? 'Full KDP Wrap' : 'Front Cover'}`}
+          >
+            {isDownloadingJpg ? (
+              <>
+                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                Exporting JPG...
+              </>
+            ) : (
+              <>
+                <ImageIcon className="h-3.5 w-3.5" />
+                {viewMode === 'wrap' ? 'Download Wrap (JPG)' : 'Download Cover (JPG)'}
+              </>
+            )}
+          </button>
           <button
             onClick={async () => {
               await handleSaveCover();
@@ -941,7 +1068,7 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
                 {/* KDP Barcode Box Placeholder */}
                 <div className="flex items-end justify-between pt-4">
                   <div className="text-[10px] text-slate-400">
-                    <div>FolioCraft AI Press</div>
+                    <div>OpusCraft Press</div>
                     <div>Category: Business / Systems</div>
                   </div>
                   <div className="w-28 h-14 bg-white border border-slate-300 rounded flex flex-col items-center justify-center text-[9px] text-slate-900 font-mono shadow-sm">
@@ -956,7 +1083,7 @@ export default function CoverDesigner({ book, totalWords = 8000, onUpdateConfig 
               {/* 2. PAPERBACK SPINE (Center ~60px) */}
               <div className="relative w-[60px] h-full bg-black/40 border-r border-black/40 flex flex-col items-center justify-between py-6 z-10">
                 <span className="text-[9px] font-bold text-amber-400 tracking-wider [writing-mode:vertical-rl] rotate-180">
-                  FolioCraft
+                  OpusCraft
                 </span>
                 <span 
                   className="text-xs font-bold text-white tracking-widest [writing-mode:vertical-rl] rotate-180 uppercase"
