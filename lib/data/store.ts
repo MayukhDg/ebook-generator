@@ -232,6 +232,17 @@ class ProductionDataStore {
   // ---------------------------------------------------------------------------
   // Books (100% Dynamic & Isolated to Authenticated User)
   // ---------------------------------------------------------------------------
+  private hydrateBook(book: any): Book {
+    if (!book) return book;
+    const gc = book.global_context || {};
+    return {
+      ...book,
+      kdp_description: book.kdp_description || gc.kdp_description || null,
+      kdp_keywords: (Array.isArray(book.kdp_keywords) && book.kdp_keywords.length > 0) ? book.kdp_keywords : (Array.isArray(gc.kdp_keywords) ? gc.kdp_keywords : []),
+      kdp_categories: (Array.isArray(book.kdp_categories) && book.kdp_categories.length > 0) ? book.kdp_categories : (Array.isArray(gc.kdp_categories) ? gc.kdp_categories : []),
+    };
+  }
+
   async getBooks(userId?: string): Promise<Book[]> {
     const supabase = createServerSupabaseClient();
     
@@ -249,7 +260,7 @@ class ProductionDataStore {
         .eq('user_id', targetUserId)
         .order('created_at', { ascending: false });
 
-      if (data) return data as Book[];
+      if (data) return data.map((b) => this.hydrateBook(b));
       return [];
     }
 
@@ -276,11 +287,11 @@ class ProductionDataStore {
         data = adminRes.data;
       }
 
-      if (data) return data as Book;
+      if (data) return this.hydrateBook(data);
     }
 
     const mock = MOCK_BOOKS.find((b) => b.id === id);
-    return mock || null;
+    return mock ? this.hydrateBook(mock) : null;
   }
 
   async getBookBySlug(slug: string): Promise<Book | null> {
@@ -302,11 +313,11 @@ class ProductionDataStore {
         data = adminRes.data;
       }
 
-      if (data) return data as Book;
+      if (data) return this.hydrateBook(data);
     }
 
     const mock = MOCK_BOOKS.find((b) => b.share_slug === slug);
-    return mock || null;
+    return mock ? this.hydrateBook(mock) : null;
   }
 
   async createBook(data: Partial<Book>): Promise<Book> {
@@ -314,7 +325,17 @@ class ProductionDataStore {
     const { data: { user } } = await supabase.auth.getUser();
     const userId = user?.id || data.user_id || '00000000-0000-0000-0000-000000000001';
 
-    const newBookPayload = {
+    const initialGc = data.global_context || {
+      target_persona: data.target_audience || '',
+      core_thesis: data.core_thesis || '',
+      terminology: {},
+      rolling_abstracts: [],
+      kdp_description: data.kdp_description || null,
+      kdp_keywords: data.kdp_keywords || [],
+      kdp_categories: data.kdp_categories || [],
+    };
+
+    const newBookPayload: any = {
       user_id: userId,
       title: data.title || 'Untitled Book',
       subtitle: data.subtitle || null,
@@ -335,12 +356,7 @@ class ProductionDataStore {
       },
       cover_full_wrap_url: null,
       source_materials: data.source_materials || [],
-      global_context: data.global_context || {
-        target_persona: data.target_audience || '',
-        core_thesis: data.core_thesis || '',
-        terminology: {},
-        rolling_abstracts: [],
-      },
+      global_context: initialGc,
       author_bio: data.author_bio || null,
       author_photo_url: data.author_photo_url || null,
       is_public_preview: false,
@@ -348,38 +364,91 @@ class ProductionDataStore {
     };
 
     if (this.isConfigured()) {
-      const { data: inserted, error } = await supabase
+      let { data: inserted, error } = await supabase
         .from('books')
-        .insert(newBookPayload)
+        .insert({
+          ...newBookPayload,
+          kdp_description: data.kdp_description || null,
+          kdp_keywords: data.kdp_keywords || [],
+          kdp_categories: data.kdp_categories || [],
+        })
         .select()
         .single();
 
-      if (inserted) return inserted as Book;
+      if (error && (error.message?.includes('kdp_') || error.code === '42703')) {
+        const retryRes = await supabase
+          .from('books')
+          .insert(newBookPayload)
+          .select()
+          .single();
+        inserted = retryRes.data;
+      }
+
+      if (inserted) return this.hydrateBook(inserted);
     }
 
-    return {
+    return this.hydrateBook({
       id: `b-${Date.now()}`,
       ...newBookPayload,
+      kdp_description: data.kdp_description || null,
+      kdp_keywords: data.kdp_keywords || [],
+      kdp_categories: data.kdp_categories || [],
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    } as Book;
+    } as Book);
   }
 
   async updateBook(id: string, updates: Partial<Book>): Promise<Book | null> {
+    const safeUpdates: any = { ...updates, updated_at: new Date().toISOString() };
+
+    // Synchronize KDP metadata inside global_context so it's always persisted in JSONB
+    if (
+      updates.kdp_description !== undefined ||
+      updates.kdp_keywords !== undefined ||
+      updates.kdp_categories !== undefined ||
+      updates.global_context
+    ) {
+      const existingBook = await this.getBookById(id).catch(() => null);
+      const existingGc = existingBook?.global_context || ({} as any);
+      safeUpdates.global_context = {
+        ...existingGc,
+        ...(updates.global_context || {}),
+        ...(updates.kdp_description !== undefined ? { kdp_description: updates.kdp_description } : {}),
+        ...(updates.kdp_keywords !== undefined ? { kdp_keywords: updates.kdp_keywords } : {}),
+        ...(updates.kdp_categories !== undefined ? { kdp_categories: updates.kdp_categories } : {}),
+      };
+    }
+
     if (this.isConfigured()) {
       const supabase = createServerSupabaseClient();
       let { data, error } = await supabase
         .from('books')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update(safeUpdates)
         .eq('id', id)
         .select()
         .single();
+
+      // If updating top-level columns failed (e.g. column does not exist in schema yet), retry without them
+      if (error && (error.message?.includes('kdp_') || error.code === '42703')) {
+        const fallbackUpdates = { ...safeUpdates };
+        delete fallbackUpdates.kdp_description;
+        delete fallbackUpdates.kdp_keywords;
+        delete fallbackUpdates.kdp_categories;
+        const retryRes = await supabase
+          .from('books')
+          .update(fallbackUpdates)
+          .eq('id', id)
+          .select()
+          .single();
+        data = retryRes.data;
+        error = retryRes.error;
+      }
 
       if (!data && process.env.SUPABASE_SERVICE_ROLE_KEY) {
         const admin = createAdminSupabaseClient();
         const adminRes = await admin
           .from('books')
-          .update({ ...updates, updated_at: new Date().toISOString() })
+          .update(safeUpdates)
           .eq('id', id)
           .select()
           .single();
@@ -389,13 +458,17 @@ class ProductionDataStore {
       if (error) {
         console.error('Error updating book in store:', error);
       }
-      if (data) return data as Book;
+      if (data) return this.hydrateBook(data);
     }
 
     // In-memory fallback for mock/demo books
     const mockIdx = MOCK_BOOKS.findIndex((b) => b.id === id);
     if (mockIdx !== -1) {
-      MOCK_BOOKS[mockIdx] = { ...MOCK_BOOKS[mockIdx], ...updates, updated_at: new Date().toISOString() };
+      MOCK_BOOKS[mockIdx] = this.hydrateBook({
+        ...MOCK_BOOKS[mockIdx],
+        ...safeUpdates,
+        updated_at: new Date().toISOString(),
+      });
       return MOCK_BOOKS[mockIdx];
     }
 

@@ -63,7 +63,59 @@ export const MOCK_BOOKS: Book[] = [
         'Chapter 2 introduces the Sovereign Operating Stack, dividing client delivery into Diagnostic, Prescriptive, and Execution layers.',
         'Chapter 3 covers autonomous packaging, providing pricing frameworks for charging $50k fixed outcomes backed by algorithmic guarantees.',
       ],
+      kdp_description: `<h3>Stop Trading Billable Hours for Capped Income.</h3>
+<p>Are you trapped on the client delivery treadmill—earning high hourly fees, yet completely unable to take a week off without your revenue grinding to an immediate halt?</p>
+<p>In <i>The Sovereign Operator</i>, veteran enterprise advisor Marcus Vance breaks down the counter-intuitive blueprint 7-figure operators use to productize tacit knowledge into autonomous software workflows, high-margin IP assets, and scalable advisory flywheels.</p>
+<h4>Inside this definitive operating guide, you will discover:</h4>
+<ul>
+  <li><b>The Billable Hour Trap:</b> Why becoming faster and more competent actually decreases your top-line revenue under traditional time-and-materials contracts.</li>
+  <li><b>The Tri-Phasic Operating Stack:</b> How to surgically decouple the diagnostic phase from manual execution to charge premium $50,000+ fixed outcomes.</li>
+  <li><b>Zero-Labor Discovery Loops:</b> How to replace 15 hours of repetitive client interviews with automated diagnostic intake scripts.</li>
+  <li><b>Catastrophe-Avoidance Value Anchors:</b> The psychological pricing matrix that turns resistance into enthusiastic corporate approvals.</li>
+</ul>
+<p>Whether you run an agency, boutique consultancy, or specialized advisory firm, this book provides the exact architecture to reclaim your time, 10x your margins, and build an enduring sovereign enterprise.</p>
+<p><b>Scroll up and click "Buy Now" to engineer your autonomous advisory firm today.</b></p>`,
+      kdp_keywords: [
+        'consulting business systems',
+        'productize professional services',
+        'decouple billable hours',
+        'agency scaling automation',
+        'high ticket advisory sales',
+        'enterprise consulting playbooks',
+        'intellectual property monetization'
+      ],
+      kdp_categories: [
+        'Business & Money > Management & Leadership',
+        'Business & Money > Consulting',
+        'Business & Money > Small Business & Entrepreneurship'
+      ],
     },
+    kdp_description: `<h3>Stop Trading Billable Hours for Capped Income.</h3>
+<p>Are you trapped on the client delivery treadmill—earning high hourly fees, yet completely unable to take a week off without your revenue grinding to an immediate halt?</p>
+<p>In <i>The Sovereign Operator</i>, veteran enterprise advisor Marcus Vance breaks down the counter-intuitive blueprint 7-figure operators use to productize tacit knowledge into autonomous software workflows, high-margin IP assets, and scalable advisory flywheels.</p>
+<h4>Inside this definitive operating guide, you will discover:</h4>
+<ul>
+  <li><b>The Billable Hour Trap:</b> Why becoming faster and more competent actually decreases your top-line revenue under traditional time-and-materials contracts.</li>
+  <li><b>The Tri-Phasic Operating Stack:</b> How to surgically decouple the diagnostic phase from manual execution to charge premium $50,000+ fixed outcomes.</li>
+  <li><b>Zero-Labor Discovery Loops:</b> How to replace 15 hours of repetitive client interviews with automated diagnostic intake scripts.</li>
+  <li><b>Catastrophe-Avoidance Value Anchors:</b> The psychological pricing matrix that turns resistance into enthusiastic corporate approvals.</li>
+</ul>
+<p>Whether you run an agency, boutique consultancy, or specialized advisory firm, this book provides the exact architecture to reclaim your time, 10x your margins, and build an enduring sovereign enterprise.</p>
+<p><b>Scroll up and click "Buy Now" to engineer your autonomous advisory firm today.</b></p>`,
+    kdp_keywords: [
+      'consulting business systems',
+      'productize professional services',
+      'decouple billable hours',
+      'agency scaling automation',
+      'high ticket advisory sales',
+      'enterprise consulting playbooks',
+      'intellectual property monetization'
+    ],
+    kdp_categories: [
+      'Business & Money > Management & Leadership',
+      'Business & Money > Consulting',
+      'Business & Money > Small Business & Entrepreneurship'
+    ],
     author_bio: 'Marcus Vance is a veteran systems architect and enterprise advisor who has built and automated multi-million dollar consultancies. He writes about autonomous software workflows and IP productization.',
     author_photo_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
     is_public_preview: true,
@@ -102,7 +154,37 @@ export const MOCK_BOOKS: Book[] = [
       rolling_abstracts: [
         'Chapter 1 explores the collapse of the 10 blue links and the emergence of Perplexity and ChatGPT Search as the primary discovery layer.',
       ],
+      kdp_description: '<h3>The End of the Ten Blue Links. The Rise of Entity Hegemony.</h3><p>For twenty-five years, marketing teams played by a clear set of rules: optimize metadata, build backlinks, and capture clicks. In months, generative search overviews dismantled that foundation forever.</p><p><b>Zero-Click Authority</b> provides the tactical operating manual for commanding visibility when search engines answer queries without sending traffic.</p><h4>Inside this definitive playbook, you will discover:</h4><ul><li><b>The Latent Space Battlefield:</b> How LLMs build consensus knowledge graphs and select definitive sources.</li><li><b>Citation Architecture:</b> Structuring technical data and executive viewpoints to maximize generative engine citations.</li><li><b>Entity Authority Protocols:</b> Moving beyond perishable keywords to permanently embed your brand in training datasets.</li><li><b>Synthetic Attribution Models:</b> Measuring conversion and enterprise pipeline in an ecosystem without traditional referral URLs.</li></ul><p>Essential reading for CMOs, enterprise strategists, and visionary operators determined to lead the next era of distribution.</p><p><b>Scroll up and click "Buy Now" to secure your authority in the algorithmic age.</b></p>',
+      kdp_keywords: [
+        'ai search optimization',
+        'answer engine optimization aeo',
+        'generative ai marketing',
+        'google ai overviews strategy',
+        'llm search distribution',
+        'future of search marketing',
+        'enterprise digital strategy'
+      ],
+      kdp_categories: [
+        'Business & Money > Marketing & Sales',
+        'Computers & Technology > Web Marketing',
+        'Business & Money > High-Tech Businesses'
+      ],
     },
+    kdp_description: '<h3>The End of the Ten Blue Links. The Rise of Entity Hegemony.</h3><p>For twenty-five years, marketing teams played by a clear set of rules: optimize metadata, build backlinks, and capture clicks. In months, generative search overviews dismantled that foundation forever.</p><p><b>Zero-Click Authority</b> provides the tactical operating manual for commanding visibility when search engines answer queries without sending traffic.</p><h4>Inside this definitive playbook, you will discover:</h4><ul><li><b>The Latent Space Battlefield:</b> How LLMs build consensus knowledge graphs and select definitive sources.</li><li><b>Citation Architecture:</b> Structuring technical data and executive viewpoints to maximize generative engine citations.</li><li><b>Entity Authority Protocols:</b> Moving beyond perishable keywords to permanently embed your brand in training datasets.</li><li><b>Synthetic Attribution Models:</b> Measuring conversion and enterprise pipeline in an ecosystem without traditional referral URLs.</li></ul><p>Essential reading for CMOs, enterprise strategists, and visionary operators determined to lead the next era of distribution.</p><p><b>Scroll up and click "Buy Now" to secure your authority in the algorithmic age.</b></p>',
+    kdp_keywords: [
+      'ai search optimization',
+      'answer engine optimization aeo',
+      'generative ai marketing',
+      'google ai overviews strategy',
+      'llm search distribution',
+      'future of search marketing',
+      'enterprise digital strategy'
+    ],
+    kdp_categories: [
+      'Business & Money > Marketing & Sales',
+      'Computers & Technology > Web Marketing',
+      'Business & Money > High-Tech Businesses'
+    ],
     author_bio: 'Marcus Vance is an analytical strategist exploring the frontier of synthetic knowledge and LLM search distribution.',
     author_photo_url: null,
     is_public_preview: false,

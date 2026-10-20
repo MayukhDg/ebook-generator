@@ -60,6 +60,9 @@ export interface GlobalContext {
   core_thesis: string;
   terminology: Record<string, string>;
   rolling_abstracts: string[];
+  kdp_description?: string | null;
+  kdp_keywords?: string[] | null;
+  kdp_categories?: string[] | null;
 }
 
 export interface Book {
@@ -76,6 +79,9 @@ export interface Book {
   cover_full_wrap_url: string | null;
   source_materials: SourceMaterial[];
   global_context: GlobalContext;
+  kdp_description?: string | null;
+  kdp_keywords?: string[] | null;
+  kdp_categories?: string[] | null;
   author_bio?: string | null;
   author_photo_url?: string | null;
   is_public_preview: boolean;

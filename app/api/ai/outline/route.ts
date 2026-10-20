@@ -90,6 +90,9 @@ export async function POST(req: NextRequest) {
       chapters: Array<{ chapter_number: number; title: string; summary: string }>;
       terminology: Record<string, string>;
       rolling_abstracts: string[];
+      kdp_description?: string;
+      kdp_keywords?: string[];
+      kdp_categories?: string[];
     };
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -97,24 +100,26 @@ export async function POST(req: NextRequest) {
 
     if (isRealKey) {
       try {
-        const openai = new OpenAI({ apiKey, timeout: 25000 });
+        const openai = new OpenAI({ apiKey, timeout: 35000 });
         const response = await openai.chat.completions.create({
           model: 'gpt-4o',
           response_format: { type: 'json_object' },
           messages: [
             {
               role: 'system',
-              content: `You are an elite ghostwriter, biographer, and publishing strategist across all genres (biography, memoir, history, politics, business, technology, self-help, philosophy, and creative non-fiction).
-Your goal is to build an authoritative, engaging, and deeply coherent chapter-by-chapter book blueprint designed for publication success.
+              content: `You are an elite ghostwriter, biographer, and Amazon KDP publishing strategist across all genres (biography, memoir, history, politics, business, technology, self-help, philosophy, and creative non-fiction).
+Your goal is to build an authoritative, engaging, and deeply coherent chapter-by-chapter book blueprint designed for publication success, ALONG WITH ready-to-publish Amazon KDP metadata (high-converting book description and backend keywords).
 Analyze the user's title, subtitle, target audience, core thesis, and any attached source materials carefully.
 Structure the book into EXACTLY ${targetChapterCount} high-impact, sequential chapters tailored precisely to the subject matter.
 
 CRITICAL RULES:
 - The chapters must be 100% relevant and coherent to the requested topic.
 - PROPRIETARY SOURCE SYNTHESIS: If the user provided voice notes, transcripts, or documents, you MUST weave their frameworks, terminology, case studies, and anecdotes directly into the chapter titles, summaries, and coined terms.
-- If the book is a biography, political history, or personal journey (e.g., about Donald Trump), structure the chapters chronologically and thematically around real events, life stages, conflicts, and milestones as requested in the core thesis.
-- NEVER force corporate consulting jargon, billing frameworks, or client deliverable models unless the book is explicitly about consulting.
+- If the book is a biography, political history, or personal journey, structure the chapters chronologically and thematically around real events, life stages, conflicts, and milestones as requested in the core thesis.
 - The 'terminology' field should contain 3-5 pivotal concepts, themes, key terms, or recurring motifs specific to this book topic and their meaningful definitions in this context.
+- AMAZON KDP SALES DESCRIPTION: Craft a compelling, high-converting book description formatted for Amazon KDP sales page using approved Amazon HTML tags (<h3>, <p>, <b>, <i>, <ul>, <li>). Include an irresistible hook headline, the central transformation/promise, a bulleted list of 4-5 major revelations ("Inside this book, you will discover:"), target audience resonance, and a closing call to action. Keep it punchy, between 250-450 words.
+- AMAZON KDP KEYWORDS: Provide EXACTLY 7 strategic, high-intent Amazon backend search keyword phrases (each under 50 characters). Target long-tail search intent that real readers type into the Amazon search bar. DO NOT just repeat the exact title.
+- AMAZON KDP CATEGORIES: Provide 2-3 precise Amazon/BISAC categories where this book will rank best (e.g. "Business & Money > Management & Leadership").
 
 Respond ONLY with a JSON object matching this schema:
 {
@@ -128,6 +133,20 @@ Respond ONLY with a JSON object matching this schema:
   "rolling_abstracts": [
     "Abstract of Chapter 1 arc...",
     "Abstract of Chapter 2 arc..."
+  ],
+  "kdp_description": "<h3>Bold Hook Headline</h3><p>Engaging opening paragraph...</p><p>Core thesis introduction...</p><h4>Inside this book, you will discover:</h4><ul><li><b>Key Takeaway 1:</b> Description</li><li><b>Key Takeaway 2:</b> Description</li></ul><p>Why this book matters...</p><p><b>Scroll up and click \\"Buy Now\\" to begin.</b></p>",
+  "kdp_keywords": [
+    "keyword phrase 1",
+    "keyword phrase 2",
+    "keyword phrase 3",
+    "keyword phrase 4",
+    "keyword phrase 5",
+    "keyword phrase 6",
+    "keyword phrase 7"
+  ],
+  "kdp_categories": [
+    "Main Category > Subcategory 1",
+    "Main Category > Subcategory 2"
   ]
 }`,
             },
@@ -161,11 +180,30 @@ ${sourcesFormatted ? `AUTHOR'S PROPRIETARY SOURCE MATERIALS (VOICE NOTES & DOCUM
     }
 
     // 2. Persist Global Context and Chapters in Store/DB
+    const kdpDescription = generatedOutline.kdp_description || `<h3>${title}</h3><p>${coreThesis}</p><p>Written for ${targetAudience}.</p>`;
+    const kdpKeywords = (generatedOutline.kdp_keywords && generatedOutline.kdp_keywords.length > 0)
+      ? generatedOutline.kdp_keywords.slice(0, 7)
+      : [
+          title.toLowerCase(),
+          targetAudience.slice(0, 40).toLowerCase(),
+          'expert publishing guide',
+          'authoritative blueprint',
+          'nonfiction authority',
+          'comprehensive operating guide',
+          'practical execution framework'
+        ];
+    const kdpCategories = (generatedOutline.kdp_categories && generatedOutline.kdp_categories.length > 0)
+      ? generatedOutline.kdp_categories
+      : ['Business & Money > Management & Leadership', 'Reference > Publishing'];
+
     const globalContext = {
       target_persona: targetAudience,
       core_thesis: coreThesis,
       terminology: generatedOutline.terminology || {},
       rolling_abstracts: generatedOutline.rolling_abstracts || [],
+      kdp_description: kdpDescription,
+      kdp_keywords: kdpKeywords,
+      kdp_categories: kdpCategories,
     };
 
     if (bookId) {
@@ -177,6 +215,9 @@ ${sourcesFormatted ? `AUTHOR'S PROPRIETARY SOURCE MATERIALS (VOICE NOTES & DOCUM
         tone_voice: toneVoice || 'Authoritative & Practical',
         global_context: globalContext,
         source_materials: allSources,
+        kdp_description: kdpDescription,
+        kdp_keywords: kdpKeywords,
+        kdp_categories: kdpCategories,
       });
 
       // Clear pending chapters and insert newly generated outline WITH full initial manuscripts!
@@ -227,6 +268,9 @@ ${sourcesFormatted ? `AUTHOR'S PROPRIETARY SOURCE MATERIALS (VOICE NOTES & DOCUM
         totalCost,
         targetChapterCount,
         globalContext,
+        kdp_description: kdpDescription,
+        kdp_keywords: kdpKeywords,
+        kdp_categories: kdpCategories,
         chapters: createdChapters,
       });
     }
@@ -237,6 +281,9 @@ ${sourcesFormatted ? `AUTHOR'S PROPRIETARY SOURCE MATERIALS (VOICE NOTES & DOCUM
       totalCost,
       targetChapterCount,
       globalContext,
+      kdp_description: kdpDescription,
+      kdp_keywords: kdpKeywords,
+      kdp_categories: kdpCategories,
       chapters: generatedOutline.chapters,
     });
   } catch (error: any) {
@@ -254,6 +301,9 @@ function generateDeterministicOutline(
   chapters: Array<{ chapter_number: number; title: string; summary: string }>;
   terminology: Record<string, string>;
   rolling_abstracts: string[];
+  kdp_description: string;
+  kdp_keywords: string[];
+  kdp_categories: string[];
 } {
   const combined = `${title} ${thesis} ${audience}`.toLowerCase();
   const isBiography = /trump|president|biograph|memoir|life|polit|history|leader|career/i.test(combined);
@@ -324,6 +374,32 @@ function generateDeterministicOutline(
         'Chapter 2 traces the rise through high-stakes arenas and public notoriety.',
         'Chapter 3 explores the dramatic ascent to national and global leadership.',
       ],
+      kdp_description: `<h3>The Unfiltered Story Behind the Headlines.</h3>
+<p>Few figures in modern history have evoked such passionate debate, reshaped political landscapes, and defied institutional expectations like the subject of <i>${title}</i>.</p>
+<p>${thesis}</p>
+<h4>Inside this definitive biographical account, you will discover:</h4>
+<ul>
+  <li><b>The Formative Crucible:</b> The pivotal early battles and family dynamics that forged an uncompromising drive for dominance.</li>
+  <li><b>Mastering Public Attention:</b> How unconventional communication strategies dismantled media playbooks and built an unbreakable grassroots movement.</li>
+  <li><b>Governing Through Institutional Friction:</b> Behind-the-scenes insights into executive decisions, foreign negotiations, and relentless opposition.</li>
+  <li><b>The Resilience Doctrine:</b> How unprecedented legal onslaughts and political adversity were systematically converted into cultural momentum.</li>
+</ul>
+<p>Written specifically for ${audience}, this book offers an objective, high-stakes examination of power, legacy, and historical transformation.</p>
+<p><b>Scroll up and click "Buy Now" to explore the complete chronicle today.</b></p>`,
+      kdp_keywords: [
+        `${title.slice(0, 30).toLowerCase()} biography`,
+        'presidential leadership history',
+        'political campaign strategy',
+        'american political biography',
+        'populist movement politics',
+        'modern political memoirs',
+        'executive authority history'
+      ],
+      kdp_categories: [
+        'Biographies & Memoirs > Historical',
+        'Politics & Social Sciences > Politics & Government',
+        'History > United States'
+      ],
     };
   }
 
@@ -384,6 +460,32 @@ function generateDeterministicOutline(
       'Chapter 1 establishes the fundamental context and core necessity.',
       'Chapter 2 details the primary operating principles.',
       'Chapter 3 diagnoses key obstacles and how to overcome them.',
+    ],
+    kdp_description: `<h3>Master the Principles of ${title}.</h3>
+<p>Most books in this field offer high-level theories that crumble when confronted with real-world complexity. You don't need more generic advice—you need an authoritative, tactical operating manual.</p>
+<p>${thesis}</p>
+<h4>Inside this definitive guide, you will discover:</h4>
+<ul>
+  <li><b>The Foundational Landscape:</b> Why conventional wisdom fails and how to avoid costly missteps early on.</li>
+  <li><b>Core Execution Pillars:</b> Systematic frameworks designed specifically for ${audience}.</li>
+  <li><b>Tactical Leverage:</b> Actionable playbooks that transform theory into immediate measurable results.</li>
+  <li><b>Compounding Mastery:</b> How to sustain performance, navigate volatile environments, and build enduring impact.</li>
+</ul>
+<p>Written for high-performing practitioners, this book provides the exact methodology required to command your field with authority.</p>
+<p><b>Scroll up and click "Buy Now" to take immediate command of your domain today.</b></p>`,
+    kdp_keywords: [
+      `${title.slice(0, 30).toLowerCase()} guide`,
+      `${audience.slice(0, 35).toLowerCase()} handbook`,
+      'practical execution playbook',
+      'systematic operating framework',
+      'proven mastery roadmap',
+      'professional authority guide',
+      'actionable strategy manual'
+    ],
+    kdp_categories: [
+      'Business & Money > Management & Leadership',
+      'Self-Help > Personal Transformation',
+      'Business & Money > Skills'
     ],
   };
 }

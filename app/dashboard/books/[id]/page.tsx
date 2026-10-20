@@ -25,6 +25,7 @@ import { calculateEstimatedPages, formatNumber } from '@/lib/utils';
 import ChapterOutlineSection from '@/components/book/ChapterOutlineSection';
 import SourceMaterialsVault from '@/components/book/SourceMaterialsVault';
 import AboutAuthorSection from '@/components/book/AboutAuthorSection';
+import AmazonKdpKit from '@/components/book/AmazonKdpKit';
 
 export default async function BookOverviewPage({
   params,
@@ -182,8 +183,17 @@ export default async function BookOverviewPage({
             initialBook={book}
           />
 
-          {/* Right Column: Global Context Memory & Source Ingestion */}
+          {/* Right Column: Amazon KDP Publishing Kit, Global Context & Sources */}
           <div className="space-y-6">
+            {/* Amazon KDP Publishing Kit */}
+            <AmazonKdpKit
+              bookId={book.id}
+              bookTitle={book.title}
+              initialDescription={book.kdp_description}
+              initialKeywords={book.kdp_keywords}
+              initialCategories={book.kdp_categories}
+            />
+
             {/* Global Context Memory Card */}
             <div className="rounded-2xl border border-slate-800/80 bg-slate-900/60 p-5 backdrop-blur-xl shadow-xl space-y-4">
               <div className="flex items-center gap-2 text-amber-400">

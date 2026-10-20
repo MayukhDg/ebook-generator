@@ -47,11 +47,21 @@ CREATE TABLE IF NOT EXISTS public.books (
     global_context JSONB DEFAULT '{}'::jsonb,
     author_bio TEXT,
     author_photo_url TEXT,
+    kdp_description TEXT,
+    kdp_keywords JSONB DEFAULT '[]'::jsonb,
+    kdp_categories JSONB DEFAULT '[]'::jsonb,
     is_public_preview BOOLEAN DEFAULT false,
     share_slug TEXT UNIQUE,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now()
 );
+
+-- Migration safety for existing installations
+ALTER TABLE IF EXISTS public.books ADD COLUMN IF NOT EXISTS author_bio TEXT;
+ALTER TABLE IF EXISTS public.books ADD COLUMN IF NOT EXISTS author_photo_url TEXT;
+ALTER TABLE IF EXISTS public.books ADD COLUMN IF NOT EXISTS kdp_description TEXT;
+ALTER TABLE IF EXISTS public.books ADD COLUMN IF NOT EXISTS kdp_keywords JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE IF EXISTS public.books ADD COLUMN IF NOT EXISTS kdp_categories JSONB DEFAULT '[]'::jsonb;
 
 -- ------------------------------------------------------------------------------
 -- 3. Chapters Table (Chapter Outline & Content)
