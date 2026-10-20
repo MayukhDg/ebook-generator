@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { ArrowLeft, Sparkles, Calendar, ArrowRight } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import BlogPostContent from '@/components/blog/BlogPostContent';
+import { ArticleJsonLd } from '@/components/seo/JsonLd';
 import type { Metadata } from 'next';
 
 export async function generateMetadata({
@@ -46,39 +47,15 @@ export default async function BlogPostPage({
     notFound();
   }
 
-  // Generate Article JSON-LD Schema
-  const articleSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: post.title,
-    description: post.meta_description,
-    datePublished: post.published_at,
-    dateModified: post.published_at,
-    author: {
-      '@type': 'Organization',
-      name: 'OpusCraft Research Team',
-      url: 'https://opuscraft.ai',
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: 'OpusCraft',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://opuscraft.ai/logo.png',
-      },
-    },
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': post.canonical_url || `https://opuscraft.ai/blog/${post.slug}`,
-    },
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-[#080d1a]">
-      {/* Dynamic SEO/AEO/GEO Structured Data Injection */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      <ArticleJsonLd
+        title={post.title}
+        description={post.meta_description}
+        slug={post.slug}
+        datePublished={post.published_at}
+        dateModified={post.published_at}
+        authorName="OpusCraft Editorial Team"
       />
       {post.schema_json && (
         <script

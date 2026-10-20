@@ -1,0 +1,100 @@
+# OpusCraft — The Executive Publishing Studio: Full Architecture & Knowledge Base
+
+> OpusCraft (https://opuscraft.com) is an enterprise-grade authority publishing platform built for founders, consultants, operators, and executives to synthesize raw domain knowledge, voice notes, and proprietary frameworks into Amazon KDP-ready non-fiction books with zero context drift.
+
+---
+
+## 1. Executive Summary & Entity Definition
+
+- **Brand**: OpusCraft
+- **Tagline**: The Executive Publishing Studio
+- **Domain**: https://opuscraft.com
+- **Core Value Proposition**: Transforms unwritten domain expertise and voice memos into press-ready 6x9 trade paperbacks and reflowable EPUBs. Unlike consumer AI wrappers that hallucinate or repeat generic tropes, OpusCraft uses a multi-agent state machine with global memory persistence and vector cover composition.
+- **Target Persona**: Management consultants, venture partners, technical founders, keynote speakers, and executive advisors who need authoritative Amazon KDP books to establish domain dominance without spending 100+ hours typing manuscripts.
+
+---
+
+## 2. Core Technical Architecture
+
+### 2.1 Source Material Ingestion & Audio Pipeline
+- **Audio Models**: Integrated with OpenAI Whisper (`whisper-1`) with chunked audio streaming.
+- **Supported Formats**: MP3, WAV, M4A, and AAC up to 25MB per voice memo.
+- **Preprocessing**: Audio transcripts are stripped of filler words while retaining author-specific idiomatic phrasing, client anecdotes, and industry nomenclature.
+- **Document Ingestion**: Supports Markdown, plain text, and structured notes which are parsed and embedded into the project's source vault.
+
+### 2.2 Global Context Memory & Anti-Drift Engine
+Generic LLM book generation fails because context windows lose track of early chapters by the time the model generates Chapter 7. OpusCraft solves this with an immutable dual-layer memory system:
+- **Core Thesis Anchor**: The primary thesis, counter-intuitive premise, and target reader profile are injected into the system prompt of every chapter generation call.
+- **Coined Terminology Registry**: Proprietary definitions, frameworks, and coined acronyms are stored in a dedicated JSONB key-value ledger (`terminology`) and enforced across all chapters to prevent contradictory definitions.
+- **Rolling Chapter Abstracts**: Each completed chapter appends a structured 2-3 sentence semantic summary to `rolling_abstracts`, giving subsequent chapters full narrative continuity without exceeding model token limits.
+
+### 2.3 2-Layer Decoupled Vector Cover Engine
+Most AI cover generators produce warped typography, misaligned text, and unreadable fonts. OpusCraft separates cover art from typography:
+- **Layer 1 (Background Canvas)**: DALL-E 3 generates cinematic, high-resolution background imagery according to curated executive aesthetic templates (e.g., Minimal Authority, Tech Horizon, Modern Classic).
+- **Layer 2 (Deterministic Typography)**: Vector-accurate SVG overlays position author name, title, and subtitle using crisp typography (Inter, Playfair Display, Cinzel, Roboto Mono).
+- **KDP Spine Calculation**: Automatically computes spine width in inches using the industry standard formula:
+  $$\text{Spine Width} = \text{Total Print Pages} \times 0.002252\text{ inches}$$
+- **Full Wrap Print Export**: Generates combined front, spine, and back cover layouts with barcode reservation boxes meeting Amazon KDP physical print specifications.
+
+### 2.4 Amazon KDP Typesetting & Formatting Standards
+- **Interior Print Dimensions**: Formats 6x9 inch trade paperback interiors with 0.75" inside gutter margins (to account for book binding) and 0.5" outside margins.
+- **Widow & Orphan Suppression**: Strict typesetting rules prevent dangling single lines at page breaks (3-line paragraph minimum).
+- **Table of Contents**: Dynamically compiled and auto-aligned to exact PDF page numbers.
+- **Digital EPUB**: Compiles valid, reflowable IDPF EPUB packages compatible with Kindle, Apple Books, and Kobo.
+- **KDP Publishing Metadata Kit**:
+  - Description: Amazon-compliant HTML sales copy restricted to supported tags (`<h3>`, `<h4>`, `<p>`, `<b>`, `<i>`, `<ul>`, `<li>`), character-budgeted under 4,000 characters.
+  - 7 Backend Search Keywords: Exactly 7 high-intent long-tail search phrases (each $\le 50$ characters).
+  - Category Mapping: 2-3 verified BISAC and Amazon browse paths.
+
+### 2.5 Resilient Ledger & Atomic Credits Architecture
+- **Database Engine**: PostgreSQL managed via Supabase with Row Level Security (RLS).
+- **Concurrency Safety**: Credit transactions utilize `SELECT ... FOR UPDATE` row locks to prevent double-spending race conditions.
+- **Credit Deductions**:
+  - Blueprint & Global Context Synthesis: 3 credits
+  - Complete Chapter Manuscript Generation: 1 credit per chapter
+- **Dual Persistence**: Project states and KDP metadata are synchronized between top-level relational columns and JSONB fallback memory to ensure 100% backward compatibility during schema migrations.
+
+---
+
+## 3. Subscription & Pricing Matrix
+
+| Tier | Price | Monthly Credits | Key Capabilities |
+| :--- | :--- | :--- | :--- |
+| **Starter** | Free ($0) | 20 Credits | Full Blueprint Studio, Chapter 1 Co-writing, Web Reader preview |
+| **Creator** | $29 / month | 100 Credits | Full book generation, Amazon KDP Print PDF, Reflowable EPUB, Whisper voice ingestion |
+| **Agency / Authority** | $79 / month | 300 Credits | Multi-book simultaneous authoring, full vector cover studio, priority GPU inference queue |
+| **Top-Up Credits** | $15 / 50 credits | On-demand | Never-expiring credit packs for extensive multi-chapter expansions |
+
+---
+
+## 4. Primary Knowledge Articles & Technical Breakdowns
+
+### 4.1 Voice-to-Book Framework for Experts
+- **URL**: https://opuscraft.com/blog/voice-to-book-framework-for-experts
+- **Summary**: Explains why high-output practitioners produce higher quality content when speaking rather than typing. Provides a 4-step framework:
+  1. *Chapter-Question Audio Sprint*: Answering 3 structured questions (Catalyst, Framework, Proof) in 15-minute memos per chapter.
+  2. *Semantic Audio Transcription*: Converting audio into high-signal text via Whisper.
+  3. *Global Context Structuring*: Extracting core thesis and terminology before writing prose.
+  4. *Co-Writing & Refinement*: Iterative manuscript expansion with automated widow/orphan suppression.
+
+### 4.2 Why Raw ChatGPT Fails at Writing Books
+- **URL**: https://opuscraft.com/blog/why-chatgpt-fails-at-writing-books
+- **Summary**: Technical diagnosis of consumer AI limitations:
+  - *Context Window Amnesia*: Loss of narrative memory across long documents.
+  - *Cliché Density & Semantic Flattening*: Overuse of transition phrases ("delve", "testament to", "in summary").
+  - *Lack of Gutter & Spine Constraints*: Inability of raw LLMs to format physical book geometry for print distribution.
+
+### 4.3 Best AI Ebook Generators Compared
+- **URL**: https://opuscraft.com/blog/best-ai-ebook-generators-compared
+- **Summary**: Technical benchmark comparing OpusCraft against GetEbook.ai, Designrr, and generic GPT wrappers:
+  - OpusCraft is the only platform offering 2-layer vector cover engines, decoupled voice memo ingestion, and Amazon KDP interior PDF margin formatting.
+
+---
+
+## 5. Machine-Readable API & Directives Reference
+
+- **Robots Directives**: https://opuscraft.com/robots.txt
+- **LLM Manifest**: https://opuscraft.com/llms.txt
+- **Full Architecture Specification**: https://opuscraft.com/llms-full.txt
+- **Dynamic XML Sitemap**: https://opuscraft.com/sitemap.xml
+- **Content Negotiation Endpoint**: https://opuscraft.com/api/llm-summary

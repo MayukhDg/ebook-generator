@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { GlobalJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://opuscraft.com"),
   title: "OpusCraft | The Executive Publishing Studio — Turn Your Expertise Into An Authoritative Book",
   description: "The AI Authority Engine for founders, consultants, and operators. Synthesize voice transcripts and frameworks into Amazon KDP-grade books through chapter-by-chapter co-writing with strict context memory and decoupled vector cover design.",
   keywords: [
@@ -16,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "OpusCraft — The Executive Publishing Studio",
     description: "Turn your real-world expertise into an authoritative, press-ready book in an afternoon.",
-    url: "https://opuscraft.ai",
+    url: "https://opuscraft.com",
     siteName: "OpusCraft",
     images: [
       {
@@ -44,6 +46,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <GlobalJsonLd />
+      </head>
       <body className="min-h-screen bg-[#FEFCF9] text-gray-900 antialiased selection:bg-orange-200 selection:text-orange-900">
         {children}
       </body>

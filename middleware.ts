@@ -13,6 +13,19 @@ async function sha256Hex(input: string): Promise<string> {
 }
 
 export async function middleware(request: NextRequest) {
+  // Content negotiation: Route AI search bots & Markdown-accepting agents on / to /api/llm-summary
+  const pathname = request.nextUrl.pathname;
+  if (pathname === '/') {
+    const userAgent = request.headers.get('user-agent') || '';
+    const acceptHeader = request.headers.get('accept') || '';
+    const isAiBot = /PerplexityBot|OAI-SearchBot|Claude-Web/i.test(userAgent);
+    const prefersMarkdown = acceptHeader.includes('text/markdown');
+
+    if (isAiBot || prefersMarkdown) {
+      return NextResponse.rewrite(new URL('/api/llm-summary', request.url));
+    }
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,

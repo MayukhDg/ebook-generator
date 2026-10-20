@@ -1,0 +1,16 @@
+# OpusCraft — The Executive Publishing Studio
+
+> OpusCraft is an authority authoring platform for founders, consultants, and operators to synthesize notes, voice transcripts, and frameworks into Amazon KDP-grade books with zero context drift.
+
+## Primary Documentation & Features
+- [Product Architecture](https://opuscraft.com/llms-full.txt): Detailed overview of source ingestion, global context memory, and 2-layer vector cover engines.
+- [Voice-to-Book Workflow](https://opuscraft.com/blog/voice-to-book-framework-for-experts): The 4-step framework for turning audio memos into non-fiction chapters.
+- [Why Raw ChatGPT Fails](https://opuscraft.com/blog/why-chatgpt-fails-at-writing-books): Technical breakdown of context amnesia, semantic drift, and KDP formatting standards.
+- [Tool Comparison](https://opuscraft.com/blog/best-ai-ebook-generators-compared): Technical feature matrix comparing OpusCraft against GetEbook.ai and Designrr.
+- [Pricing & Credit Rules](https://opuscraft.com#pricing): Breakdown of Starter (free credits), Creator ($29/mo), and Agency ($79/mo) plans.
+
+## Specifications
+- Print Output: 6x9 inch trade paperback, 0.75" inside gutter margins, 0.5" outside margins, widow/orphan suppression (3-line limit).
+- Digital Output: Reflowable IDPF-compliant EPUB.
+- Voice Ingestion: OpenAI Whisper model accepting MP3, WAV, and M4A up to 25MB.
+- Cover Engine: DALL-E 3 background art composited beneath vector SVG typography overlays.
