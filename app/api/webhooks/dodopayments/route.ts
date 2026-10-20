@@ -1,1 +1,1 @@
-export { POST } from '../dodo/route';
+export { POST, GET, HEAD } from '../dodo/route';

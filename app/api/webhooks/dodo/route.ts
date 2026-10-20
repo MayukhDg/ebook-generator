@@ -48,37 +48,42 @@ function getWebhookSecret(): string {
 function verifyDodoWebhook(rawBody: string, headers: Record<string, string>, secret: string): any {
   const cleanSecret = secret.trim();
 
-  // 1. Try Dodo Payments SDK unwrap
+  // Normalize all incoming header keys to lowercase
+  const normalizedHeaders: Record<string, string> = {};
+  for (const [k, v] of Object.entries(headers)) {
+    normalizedHeaders[k.toLowerCase()] = v;
+  }
+
+  // Ensure webhook-* headers exist, mapping from svix-* if present
+  normalizedHeaders['webhook-id'] = normalizedHeaders['webhook-id'] || normalizedHeaders['svix-id'] || '';
+  normalizedHeaders['webhook-signature'] = normalizedHeaders['webhook-signature'] || normalizedHeaders['svix-signature'] || '';
+  normalizedHeaders['webhook-timestamp'] = normalizedHeaders['webhook-timestamp'] || normalizedHeaders['svix-timestamp'] || '';
+
+  // 1. Try Standard Webhooks standard parsing (auto-handles whsec_ prefix and base64)
   try {
-    return dodo.webhooks.unwrap(rawBody, {
-      headers: {
-        'webhook-id': headers['webhook-id'] || '',
-        'webhook-signature': headers['webhook-signature'] || '',
-        'webhook-timestamp': headers['webhook-timestamp'] || '',
-      },
-      key: cleanSecret,
-    });
-  } catch (sdkErr: any) {
-    // 2. Fallback to standardwebhooks directly
+    const wh = new Webhook(cleanSecret);
+    return wh.verify(rawBody, normalizedHeaders);
+  } catch (err1) {
+    // 2. Try raw format if the secret was stored without base64 encoding
     try {
-      const wh = new Webhook(cleanSecret);
-      return wh.verify(rawBody, headers);
-    } catch {
+      const whRaw = new Webhook(cleanSecret, { format: 'raw' });
+      return whRaw.verify(rawBody, normalizedHeaders);
+    } catch (err2) {
       // 3. Try base64-encoded secret
       try {
         const base64Secret = Buffer.from(cleanSecret, 'utf-8').toString('base64');
         const whB64 = new Webhook(base64Secret);
-        return whB64.verify(rawBody, headers);
-      } catch {
-        // 4. Try stripping 'whsec_' prefix if present
+        return whB64.verify(rawBody, normalizedHeaders);
+      } catch (err3) {
+        // 4. Try explicitly stripping 'whsec_' prefix
         if (cleanSecret.startsWith('whsec_')) {
           try {
             const stripped = cleanSecret.slice('whsec_'.length);
             const whStrip = new Webhook(stripped);
-            return whStrip.verify(rawBody, headers);
+            return whStrip.verify(rawBody, normalizedHeaders);
           } catch {}
         }
-        throw sdkErr;
+        throw err1;
       }
     }
   }
@@ -270,4 +275,16 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+export async function GET() {
+  return NextResponse.json({
+    status: 'ok',
+    message: 'OpusCraft Dodo Payments webhook endpoint is active',
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export async function HEAD() {
+  return new Response(null, { status: 200 });
 }
