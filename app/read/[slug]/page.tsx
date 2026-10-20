@@ -17,8 +17,32 @@ export default async function PublicWebReaderPage({
 
   const chapters = await store.getChapters(book.id);
 
+  const bookSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Book',
+    name: book.title,
+    headline: book.subtitle || book.title,
+    author: {
+      '@type': 'Person',
+      name: book.cover_style_config?.author_name || 'Author',
+    },
+    abstract: book.core_thesis,
+    inLanguage: 'en',
+    bookFormat: 'https://schema.org/EBook',
+    url: `https://opuscraft.com/read/${book.share_slug}`,
+    publisher: {
+      '@type': 'Organization',
+      name: 'OpusCraft',
+      url: 'https://opuscraft.com',
+    },
+  };
+
   return (
     <div className="min-h-screen bg-[#060a14] text-slate-100 flex flex-col justify-between">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(bookSchema).replace(/</g, '\\u003c') }}
+      />
       {/* Reader Minimal Navigation */}
       <header className="border-b border-slate-800/80 bg-[#080d1a]/90 backdrop-blur-xl px-4 py-3 sticky top-0 z-50">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
@@ -114,9 +138,9 @@ export default async function PublicWebReaderPage({
           <div className="border-t border-slate-800/60 pt-12 pb-8">
             <div className="rounded-3xl border border-slate-800/80 bg-gradient-to-b from-slate-900/90 to-slate-950 p-8 sm:p-10 text-center space-y-6 max-w-xl mx-auto shadow-2xl">
               <div className="space-y-1">
-                <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">
+                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-amber-400">
                   About the Author
-                </h3>
+                </h2>
                 <div className="w-10 h-0.5 bg-amber-500 rounded-full mx-auto" />
               </div>
 
@@ -150,9 +174,9 @@ export default async function PublicWebReaderPage({
           <div className="flex items-center justify-center gap-1.5 text-amber-400 font-bold text-xs">
             <Sparkles className="h-4 w-4" /> Authored with OpusCraft
           </div>
-          <h3 className="text-lg sm:text-xl font-extrabold text-white">
+          <h2 className="text-lg sm:text-xl font-extrabold text-white">
             Turn your real-world expertise into a published, press-ready book in an afternoon.
-          </h3>
+          </h2>
           <p className="text-xs text-slate-400">
             Zero hallucinated text. Strict context memory. 1-click Amazon KDP trade paperback & reflowable EPUB export.
           </p>

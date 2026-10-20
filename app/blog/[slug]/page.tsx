@@ -47,6 +47,17 @@ export default async function BlogPostPage({
     notFound();
   }
 
+  // Extract FAQ items if schema_json contains FAQPage schema
+  let faqItems: Array<{ question: string; answer: string }> | undefined = undefined;
+  if (post.schema_json?.mainEntity && Array.isArray(post.schema_json.mainEntity)) {
+    faqItems = post.schema_json.mainEntity
+      .filter((item: any) => item['@type'] === 'Question' || item.name)
+      .map((item: any) => ({
+        question: item.name || '',
+        answer: item.acceptedAnswer?.text || '',
+      }));
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-[#080d1a]">
       <ArticleJsonLd
@@ -56,8 +67,9 @@ export default async function BlogPostPage({
         datePublished={post.published_at}
         dateModified={post.published_at}
         authorName="OpusCraft Editorial Team"
+        faqItems={faqItems}
       />
-      {post.schema_json && (
+      {post.schema_json && !faqItems && (
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(post.schema_json) }}
@@ -96,6 +108,16 @@ export default async function BlogPostPage({
           </p>
         </header>
 
+        {/* Bottom-Line-Up-Front (BLUF) Executive Summary Block */}
+        <aside className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 text-slate-200 text-sm leading-relaxed shadow-sm">
+          <div className="text-[11px] font-bold uppercase tracking-widest text-amber-400 mb-2 flex items-center gap-1.5">
+            <Sparkles className="h-3.5 w-3.5" /> Bottom Line Up Front (Executive Summary)
+          </div>
+          <p className="font-medium text-slate-100 text-sm sm:text-base leading-relaxed">
+            {post.meta_description}
+          </p>
+        </aside>
+
         {/* High-Contrast 68ch Measure Editorial Reader Layout */}
         <article className="max-w-none">
           <BlogPostContent content={post.content_markdown} />
@@ -106,9 +128,9 @@ export default async function BlogPostPage({
           <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-3 py-1 text-xs font-bold text-amber-300">
             <Sparkles className="h-3.5 w-3.5" /> Stop Writing AI Slop
           </div>
-          <h3 className="text-xl sm:text-2xl font-extrabold text-white">
+          <h2 className="text-xl sm:text-2xl font-extrabold text-white">
             Publish your authority book in an afternoon with OpusCraft.
-          </h3>
+          </h2>
           <p className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto">
             Ingest voice memos, synthesize an 8-chapter blueprint with strict context memory, design crisp vector covers, and export 1-click Amazon KDP trade paperback PDFs.
           </p>

@@ -42,7 +42,7 @@ export default async function BlogIndexPage() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
               <FileText className="h-6 w-6" />
             </div>
-            <h3 className="text-xl font-bold text-white">Articles In Preparation</h3>
+            <h2 className="text-xl font-bold text-white">Articles In Preparation</h2>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed max-w-md mx-auto">
               In-depth playbooks, AEO blueprints, and Amazon KDP publishing frameworks are currently being written. Check back soon or launch the studio to begin co-authoring your own book.
             </p>
@@ -57,43 +57,54 @@ export default async function BlogIndexPage() {
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {posts.map((post) => (
-              <Link
-                key={post.id}
-                href={`/blog/${post.slug}`}
-                className="group flex flex-col justify-between rounded-3xl border border-slate-800/80 bg-slate-900/60 p-6 backdrop-blur-xl transition-all hover:border-amber-500/40 hover:bg-slate-900/90 shadow-xl"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span className="flex items-center gap-1.5 font-medium">
-                      <Calendar className="h-3.5 w-3.5 text-slate-500" />
-                      {formatDate(post.published_at)}
-                    </span>
-                    <span className="font-mono text-[11px] text-slate-500">
-                      6 min read
-                    </span>
+          <section className="space-y-6">
+            <div className="border-b border-slate-800/80 pb-4">
+              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+                Executive Publishing Frameworks & Case Studies
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed mt-1">
+                Read tactical breakdowns on turning voice memos into Amazon KDP books, preventing generative context drift, and engineering discoverability in LLM answer engines.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {posts.map((post) => (
+                <Link
+                  key={post.id}
+                  href={`/blog/${post.slug}`}
+                  className="group flex flex-col justify-between rounded-3xl border border-slate-800/80 bg-slate-900/60 p-6 backdrop-blur-xl transition-all hover:border-amber-500/40 hover:bg-slate-900/90 shadow-xl"
+                >
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-xs text-slate-500">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <Calendar className="h-3.5 w-3.5 text-slate-500" />
+                        {formatDate(post.published_at)}
+                      </span>
+                      <span className="font-mono text-[11px] text-slate-500">
+                        6 min read
+                      </span>
+                    </div>
+
+                    <h3 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors line-clamp-2">
+                      {post.title}
+                    </h3>
+
+                    <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
+                      {post.meta_description}
+                    </p>
                   </div>
 
-                  <h2 className="text-lg font-bold text-white group-hover:text-amber-400 transition-colors line-clamp-2">
-                    {post.title}
-                  </h2>
-
-                  <p className="text-xs text-slate-400 leading-relaxed line-clamp-3">
-                    {post.meta_description}
-                  </p>
-                </div>
-
-                <div className="mt-6 border-t border-slate-800/80 pt-4 flex items-center justify-end text-xs">
-                  <span className="font-bold text-amber-400 group-hover:translate-x-1 transition-transform flex items-center gap-1">
-                    Read Article <ArrowRight className="h-3.5 w-3.5" />
-                  </span>
-                </div>
-              </Link>
-            ))}
+                  <div className="mt-6 border-t border-slate-800/80 pt-4 flex items-center justify-end text-xs">
+                    <span className="font-bold text-amber-400 group-hover:translate-x-1 transition-transform flex items-center gap-1">
+                      Read Article <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
+                  </div>
+                </Link>
+              ))}
           </div>
-        )}
-      </main>
+        </section>
+      )}
+    </main>
 
       <Footer />
     </div>
