@@ -1,4 +1,24 @@
-Phase 5: Post-Deployment External ConfigurationsComplete these steps outside your codebase once the deployment is live on opuscraft.com:Bypass Cloudflare Bot Protections (If using Cloudflare):Go to Security $\rightarrow$ WAF $\rightarrow$ Custom Rules.Add Rule:Expression: (cf.client.bot) or (http.user_agent contains "PerplexityBot") or (http.user_agent contains "OAI-SearchBot") or (http.user_agent contains "Claude-Web")Action: Bypass $\rightarrow$ Disable Bot Management.Submit Sitemaps to Bing and Google:Bing Webmaster Tools (Critical for ChatGPT & Copilot): Log in $\rightarrow$ Add opuscraft.com $\rightarrow$ Navigate to Sitemaps $\rightarrow$ Submit [https://opuscraft.com/sitemap.xml](https://opuscraft.com/sitemap.xml).Google Search Console: Submit [https://opuscraft.com/sitemap.xml](https://opuscraft.com/sitemap.xml).Verify Production Crawler Ingestion (Terminal):Run these terminal commands against your production domain to confirm bots are not blocked:Bash# Test PerplexityBot retrieval
+# Phase 5: Post-Deployment External Configurations
+
+Complete these steps outside your codebase once the deployment is live on opuscraft.com:
+
+## 1. Bypass Cloudflare Bot Protections (If using Cloudflare)
+- Go to **Security** → **WAF** → **Custom Rules**.
+- Add Rule:
+  - **Expression**: `(cf.client.bot) or (http.user_agent contains "PerplexityBot") or (http.user_agent contains "OAI-SearchBot") or (http.user_agent contains "Claude-Web")`
+  - **Action**: Bypass → Disable Bot Management.
+
+## 2. Submit Sitemaps to Bing and Google
+- **Bing Webmaster Tools** *(Critical for ChatGPT & Copilot)*:
+  - Log in → Add `opuscraft.com` → Navigate to **Sitemaps** → Submit `https://opuscraft.com/sitemap.xml`.
+- **Google Search Console**:
+  - Submit `https://opuscraft.com/sitemap.xml`.
+
+## 3. Verify Production Crawler Ingestion (Terminal)
+Run these terminal commands against your production domain to confirm bots are not blocked:
+
+```bash
+# Test PerplexityBot retrieval (verifies content negotiation / rewrite)
 curl -A "PerplexityBot" -I https://opuscraft.com/
 
 # Verify robots.txt serves HTTP 200
@@ -6,3 +26,4 @@ curl -s -o /dev/null -w "%{http_code}\n" https://opuscraft.com/robots.txt
 
 # Verify llms.txt delivers raw Markdown
 curl -s https://opuscraft.com/llms.txt | head -n 10
+```
