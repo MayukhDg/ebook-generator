@@ -23,7 +23,7 @@ export async function generateMetadata({
     description: post.meta_description,
     keywords: post.target_keywords,
     alternates: {
-      canonical: post.canonical_url || `https://opuscraft.ai/blog/${post.slug}`,
+      canonical: post.canonical_url || `https://opuscraft.studio/blog/${post.slug}`,
     },
     openGraph: {
       title: post.title,

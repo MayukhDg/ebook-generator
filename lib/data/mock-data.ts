@@ -440,7 +440,7 @@ If your goal is building authority, your book cannot read like a regurgitated Wi
 
 Co-writing chapter-by-chapter with structured memory and surgical editorial prompts produces Amazon KDP-grade books in an afternoon—without compromising your reputation.`,
     funnel_stage: 'awareness',
-    canonical_url: 'https://opuscraft.ai/blog/why-chatgpt-fails-at-writing-books',
+    canonical_url: 'https://opuscraft.studio/blog/why-chatgpt-fails-at-writing-books',
     target_keywords: ['chatgpt book writing', 'amazon kdp ai ban', 'ai context drift', 'ai book generator', 'write non-fiction book ai'],
     schema_json: {
       '@context': 'https://schema.org',
@@ -530,7 +530,7 @@ Rather than a "generate all" button that creates generic fluff, you co-author on
 4. Co-write and polish chapter drafts with revision diffs.
 5. Export to Amazon KDP Print and Kindle EPUB.`,
     funnel_stage: 'consideration',
-    canonical_url: 'https://opuscraft.ai/blog/turn-voice-notes-and-client-frameworks-into-an-ebook',
+    canonical_url: 'https://opuscraft.studio/blog/turn-voice-notes-and-client-frameworks-into-an-ebook',
     target_keywords: ['voice to book', 'consultant book publishing', 'how to write book fast', 'speech to text book', 'turn notes into ebook'],
     schema_json: {
       '@context': 'https://schema.org',
@@ -599,7 +599,7 @@ Here is an objective technical comparison between **OpusCraft**, **GetEbook.ai**
 - **Choose GetEbook.ai** if you want to churn out short 15-page generic guides for low-ticket affiliate offers.
 - **Choose OpusCraft** if you are a domain expert who wants to synthesize proprietary frameworks, voice notes, and methodology into a genuine Amazon KDP-grade paperback book with clean vector typography and zero hallucinated fluff.`,
     funnel_stage: 'purchase',
-    canonical_url: 'https://opuscraft.ai/blog/best-ai-ebook-creators-reviewed',
+    canonical_url: 'https://opuscraft.studio/blog/best-ai-ebook-creators-reviewed',
     target_keywords: ['best ai ebook creator', 'designrr alternative', 'ai book software 2026', 'opuscraft review', 'kdp print ai software'],
     schema_json: {
       '@context': 'https://schema.org',

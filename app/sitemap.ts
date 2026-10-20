@@ -4,7 +4,7 @@ import { store } from '@/lib/data/store';
 export const dynamic = 'force-dynamic';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = 'https://opuscraft.com';
+  const baseUrl = 'https://opuscraft.studio';
   const currentDate = new Date();
 
   // 1. Core Static Marketing & Documentation Routes

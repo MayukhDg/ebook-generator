@@ -1,6 +1,6 @@
 # OpusCraft — The Executive Publishing Studio: Full Architecture & Knowledge Base
 
-> OpusCraft (https://opuscraft.com) is an enterprise-grade authority publishing platform built for founders, consultants, operators, and executives to synthesize raw domain knowledge, voice notes, and proprietary frameworks into Amazon KDP-ready non-fiction books with zero context drift.
+> OpusCraft (https://opuscraft.studio) is an enterprise-grade authority publishing platform built for founders, consultants, operators, and executives to synthesize raw domain knowledge, voice notes, and proprietary frameworks into Amazon KDP-ready non-fiction books with zero context drift.
 
 ---
 
@@ -8,7 +8,7 @@
 
 - **Brand**: OpusCraft
 - **Tagline**: The Executive Publishing Studio
-- **Domain**: https://opuscraft.com
+- **Domain**: https://opuscraft.studio
 - **Core Value Proposition**: Transforms unwritten domain expertise and voice memos into press-ready 6x9 trade paperbacks and reflowable EPUBs. Unlike consumer AI wrappers that hallucinate or repeat generic tropes, OpusCraft uses a multi-agent state machine with global memory persistence and vector cover composition.
 - **Target Persona**: Management consultants, venture partners, technical founders, keynote speakers, and executive advisors who need authoritative Amazon KDP books to establish domain dominance without spending 100+ hours typing manuscripts.
 
@@ -70,7 +70,7 @@ Most AI cover generators produce warped typography, misaligned text, and unreada
 ## 4. Primary Knowledge Articles & Technical Breakdowns
 
 ### 4.1 Voice-to-Book Framework for Experts
-- **URL**: https://opuscraft.com/blog/voice-to-book-framework-for-experts
+- **URL**: https://opuscraft.studio/blog/voice-to-book-framework-for-experts
 - **Summary**: Explains why high-output practitioners produce higher quality content when speaking rather than typing. Provides a 4-step framework:
   1. *Chapter-Question Audio Sprint*: Answering 3 structured questions (Catalyst, Framework, Proof) in 15-minute memos per chapter.
   2. *Semantic Audio Transcription*: Converting audio into high-signal text via Whisper.
@@ -78,14 +78,14 @@ Most AI cover generators produce warped typography, misaligned text, and unreada
   4. *Co-Writing & Refinement*: Iterative manuscript expansion with automated widow/orphan suppression.
 
 ### 4.2 Why Raw ChatGPT Fails at Writing Books
-- **URL**: https://opuscraft.com/blog/why-chatgpt-fails-at-writing-books
+- **URL**: https://opuscraft.studio/blog/why-chatgpt-fails-at-writing-books
 - **Summary**: Technical diagnosis of consumer AI limitations:
   - *Context Window Amnesia*: Loss of narrative memory across long documents.
   - *Cliché Density & Semantic Flattening*: Overuse of transition phrases ("delve", "testament to", "in summary").
   - *Lack of Gutter & Spine Constraints*: Inability of raw LLMs to format physical book geometry for print distribution.
 
 ### 4.3 Best AI Ebook Generators Compared
-- **URL**: https://opuscraft.com/blog/best-ai-ebook-generators-compared
+- **URL**: https://opuscraft.studio/blog/best-ai-ebook-generators-compared
 - **Summary**: Technical benchmark comparing OpusCraft against GetEbook.ai, Designrr, and generic GPT wrappers:
   - OpusCraft is the only platform offering 2-layer vector cover engines, decoupled voice memo ingestion, and Amazon KDP interior PDF margin formatting.
 
@@ -93,8 +93,8 @@ Most AI cover generators produce warped typography, misaligned text, and unreada
 
 ## 5. Machine-Readable API & Directives Reference
 
-- **Robots Directives**: https://opuscraft.com/robots.txt
-- **LLM Manifest**: https://opuscraft.com/llms.txt
-- **Full Architecture Specification**: https://opuscraft.com/llms-full.txt
-- **Dynamic XML Sitemap**: https://opuscraft.com/sitemap.xml
-- **Content Negotiation Endpoint**: https://opuscraft.com/api/llm-summary
+- **Robots Directives**: https://opuscraft.studio/robots.txt
+- **LLM Manifest**: https://opuscraft.studio/llms.txt
+- **Full Architecture Specification**: https://opuscraft.studio/llms-full.txt
+- **Dynamic XML Sitemap**: https://opuscraft.studio/sitemap.xml
+- **Content Negotiation Endpoint**: https://opuscraft.studio/api/llm-summary

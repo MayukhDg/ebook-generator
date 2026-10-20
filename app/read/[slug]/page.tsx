@@ -29,11 +29,11 @@ export default async function PublicWebReaderPage({
     abstract: book.core_thesis,
     inLanguage: 'en',
     bookFormat: 'https://schema.org/EBook',
-    url: `https://opuscraft.com/read/${book.share_slug}`,
+    url: `https://opuscraft.studio/read/${book.share_slug}`,
     publisher: {
       '@type': 'Organization',
       name: 'OpusCraft',
-      url: 'https://opuscraft.com',
+      url: 'https://opuscraft.studio',
     },
   };
 

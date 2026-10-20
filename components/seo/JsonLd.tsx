@@ -15,11 +15,11 @@ export function GlobalJsonLd() {
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    '@id': 'https://opuscraft.com/#organization',
+    '@id': 'https://opuscraft.studio/#organization',
     name: 'OpusCraft',
     alternateName: 'OpusCraft — The Executive Publishing Studio',
-    url: 'https://opuscraft.com',
-    logo: 'https://opuscraft.com/og-image.png',
+    url: 'https://opuscraft.studio',
+    logo: 'https://opuscraft.studio/og-image.png',
     description:
       'The AI Authority Engine for founders, consultants, and operators to synthesize notes, voice transcripts, and frameworks into Amazon KDP-grade books with zero context drift.',
     sameAs: [
@@ -30,23 +30,23 @@ export function GlobalJsonLd() {
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer support',
-      url: 'https://opuscraft.com',
+      url: 'https://opuscraft.studio',
     },
   };
 
   const softwareApplicationSchema = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    '@id': 'https://opuscraft.com/#software',
+    '@id': 'https://opuscraft.studio/#software',
     name: 'OpusCraft',
     alternateName: 'OpusCraft Publishing Studio',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'All Web Browsers (Cloud-native)',
-    url: 'https://opuscraft.com',
+    url: 'https://opuscraft.studio',
     description:
       'Executive book authoring platform featuring Global Context Memory, OpenAI Whisper voice-to-book transcription, decoupled 2-layer vector cover design, and Amazon KDP interior print typesetting.',
     creator: {
-      '@id': 'https://opuscraft.com/#organization',
+      '@id': 'https://opuscraft.studio/#organization',
     },
     offers: [
       {
@@ -138,7 +138,7 @@ export function ArticleJsonLd({
   faqItems = [],
   howToSteps = [],
 }: ArticleJsonLdProps) {
-  const articleUrl = `https://opuscraft.com/blog/${slug}`;
+  const articleUrl = `https://opuscraft.studio/blog/${slug}`;
 
   const articleSchema: any = {
     '@context': 'https://schema.org',
@@ -156,15 +156,15 @@ export function ArticleJsonLd({
     author: {
       '@type': 'Person',
       name: authorName,
-      url: 'https://opuscraft.com',
+      url: 'https://opuscraft.studio',
     },
     publisher: {
       '@type': 'Organization',
       name: 'OpusCraft',
-      url: 'https://opuscraft.com',
+      url: 'https://opuscraft.studio',
       logo: {
         '@type': 'ImageObject',
-        url: 'https://opuscraft.com/og-image.png',
+        url: 'https://opuscraft.studio/og-image.png',
       },
     },
   };

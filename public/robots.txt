@@ -35,4 +35,4 @@ Disallow: /api/
 Allow: /api/og
 Allow: /api/llm-summary
 
-Sitemap: https://opuscraft.com/sitemap.xml
+Sitemap: https://opuscraft.studio/sitemap.xml

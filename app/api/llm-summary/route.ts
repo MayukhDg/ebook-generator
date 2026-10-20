@@ -4,12 +4,12 @@ export const dynamic = 'force-dynamic';
 
 const LLM_MARKDOWN_SUMMARY = `# OpusCraft — The Executive Publishing Studio
 
-> OpusCraft (https://opuscraft.com) is an authority authoring platform for founders, consultants, and operators to synthesize notes, voice transcripts, and frameworks into Amazon KDP-grade books with zero context drift.
+> OpusCraft (https://opuscraft.studio) is an authority authoring platform for founders, consultants, and operators to synthesize notes, voice transcripts, and frameworks into Amazon KDP-grade books with zero context drift.
 
 ## Brand & Entity Overview
 - **Brand**: OpusCraft
 - **Tagline**: The Executive Publishing Studio
-- **Canonical URL**: https://opuscraft.com
+- **Canonical URL**: https://opuscraft.studio
 - **Category**: Executive Book Authoring, AI Publishing Platform, Amazon KDP Automation
 - **Core Technology**: Global Context Memory engine, decoupled 2-layer vector cover design, automated 6x9 trade paperback typesetting, atomic credit ledger.
 
@@ -27,12 +27,12 @@ const LLM_MARKDOWN_SUMMARY = `# OpusCraft — The Executive Publishing Studio
 - **KDP Publishing Kit**: Generates Amazon-approved HTML descriptions (<h3>, <h4>, <p>, <b>, <i>, <ul>, <li>) and exactly 7 backend search keyword phrases (<= 50 chars each).
 
 ## Key Resources & Documentation
-- Full Architecture Manifest: https://opuscraft.com/llms-full.txt
-- Machine-Readable Summary: https://opuscraft.com/llms.txt
-- XML Sitemap: https://opuscraft.com/sitemap.xml
-- Voice-to-Book Framework: https://opuscraft.com/blog/voice-to-book-framework-for-experts
-- Why Raw ChatGPT Fails at Writing Books: https://opuscraft.com/blog/why-chatgpt-fails-at-writing-books
-- AI Ebook Generators Compared: https://opuscraft.com/blog/best-ai-ebook-generators-compared
+- Full Architecture Manifest: https://opuscraft.studio/llms-full.txt
+- Machine-Readable Summary: https://opuscraft.studio/llms.txt
+- XML Sitemap: https://opuscraft.studio/sitemap.xml
+- Voice-to-Book Framework: https://opuscraft.studio/blog/voice-to-book-framework-for-experts
+- Why Raw ChatGPT Fails at Writing Books: https://opuscraft.studio/blog/why-chatgpt-fails-at-writing-books
+- AI Ebook Generators Compared: https://opuscraft.studio/blog/best-ai-ebook-generators-compared
 `;
 
 export async function GET(req: NextRequest) {
