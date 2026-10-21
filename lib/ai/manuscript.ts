@@ -93,7 +93,7 @@ Chapter Focus / Summary: ${chapterSummary || 'In-depth exploration of this chapt
 Write the complete chapter manuscript now in clean, natural prose without unnecessary '#' or '*' symbols and using em dashes very sparingly.`;
 
       const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+        model: 'gpt-6-luna',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
