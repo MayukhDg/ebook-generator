@@ -3,12 +3,18 @@
 import React, { useState } from 'react';
 import { Check } from 'lucide-react';
 import { PRICING_PLANS } from '@/lib/dodo/config';
+import { trackEvent } from '@/lib/analytics/gtag';
 
 export default function PricingSection() {
   const [isCheckoutLoading, setIsCheckoutLoading] = useState<string | null>(null);
 
   const handleCheckout = async (itemId: string) => {
     setIsCheckoutLoading(itemId);
+    trackEvent({
+      action: 'begin_checkout',
+      category: 'ecommerce',
+      label: itemId,
+    });
     try {
       const isPack = itemId.startsWith('topup_');
       const res = await fetch('/api/checkout', {

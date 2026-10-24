@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { GlobalJsonLd } from "@/components/seo/JsonLd";
+import GoogleAnalytics from "@/components/analytics/GoogleAnalytics";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://opuscraft.studio"),
@@ -50,6 +51,7 @@ export default function RootLayout({
         <GlobalJsonLd />
       </head>
       <body className="min-h-screen bg-[#FEFCF9] text-gray-900 antialiased selection:bg-orange-200 selection:text-orange-900">
+        <GoogleAnalytics />
         {children}
       </body>
     </html>
