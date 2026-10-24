@@ -108,10 +108,10 @@ export default async function BlogPostPage({
           </p>
         </header>
 
-        {/* Bottom-Line-Up-Front (BLUF) Executive Summary Block */}
+        {/* Executive Summary Block */}
         <aside className="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5 text-slate-200 text-sm leading-relaxed shadow-sm">
           <div className="text-[11px] font-bold uppercase tracking-widest text-amber-400 mb-2 flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5" /> Bottom Line Up Front (Executive Summary)
+            <Sparkles className="h-3.5 w-3.5" /> Executive Summary
           </div>
           <p className="font-medium text-slate-100 text-sm sm:text-base leading-relaxed">
             {post.meta_description}
