@@ -1,27 +1,6 @@
-# Post-Deployment Verification Steps
+Keywords -
 
-Once your deployment on Vercel completes, execute the external verification steps:
-
-## 1. Bypass Cloudflare Bot Protections (if using Cloudflare):
-- Navigate to **Security** → **WAF** → **Custom Rules**.
-- Create a rule with expression:
-  ```text
-  (cf.client.bot) or (http.user_agent contains "PerplexityBot") or (http.user_agent contains "OAI-SearchBot") or (http.user_agent contains "Claude-Web")
-  ```
-- Action: **Bypass** → **Disable Bot Management**.
-
-## 2. Submit XML Sitemaps:
-- **Bing Webmaster Tools** *(Primary discovery for ChatGPT Search & Copilot)*: Submit `https://opuscraft.studio/sitemap.xml`.
-- **Google Search Console**: Submit `https://opuscraft.studio/sitemap.xml`.
-
-## 3. Verify Live Bot Directives in Terminal:
-```bash
-# Test PerplexityBot retrieval & content negotiation
-curl -A "PerplexityBot" -I https://opuscraft.studio/
-
-# Verify robots.txt serves HTTP 200
-curl -s -o /dev/null -w "%{http_code}\n" https://opuscraft.studio/robots.txt
-
-# Verify llms.txt delivers raw Markdown
-curl -s https://opuscraft.studio/llms.txt | head -n 10
-```
+kindle direct publishing
+self publishing a book
+digital book 
+self publication of books

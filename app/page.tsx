@@ -95,7 +95,7 @@ export default async function HomePage() {
 
           {/* Subheadline */}
           <p className="max-w-3xl mx-auto text-base sm:text-xl text-gray-500 leading-relaxed">
-            Stop fighting ChatGPT's memory limits and unreadable AI slop. Ingest messy voice notes, co-write chapter-by-chapter with{' '}
+            Stop fighting memory limits and unreadable AI slop. Ingest messy voice notes, co-write chapter-by-chapter with{' '}
             <strong className="text-gray-700">strict global memory</strong>, design crisp vector covers, and export 1-click Amazon KDP paperbacks.
           </p>
 
