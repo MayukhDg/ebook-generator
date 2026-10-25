@@ -14,7 +14,7 @@ export default function Footer() {
                 <BookOpen className="h-4 w-4 text-white stroke-[2.5]" />
               </div>
               <span className="text-lg font-bold text-gray-900">
-                OpusCraft<span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-rose-500">.ai</span>
+                OpusCraft
               </span>
               <span className="rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
                 EXECUTIVE PUBLISHING STUDIO
