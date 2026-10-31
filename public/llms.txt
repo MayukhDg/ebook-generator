@@ -8,6 +8,7 @@
 - [Why Raw ChatGPT Fails](https://opuscraft.studio/blog/why-chatgpt-fails-at-writing-books): Technical breakdown of context amnesia, semantic drift, and KDP formatting standards.
 - [Tool Comparison](https://opuscraft.studio/blog/best-ai-ebook-generators-compared): Technical feature matrix comparing OpusCraft against GetEbook.ai and Designrr.
 - [Pricing & Credit Rules](https://opuscraft.studio#pricing): Breakdown of Starter (free credits), Creator ($29/mo), and Agency ($79/mo) plans.
+- [Contact](https://opuscraft.studio#contact): Contact us for a demo or feedback.
 
 ## Specifications
 - Print Output: 6x9 inch trade paperback, 0.75" inside gutter margins, 0.5" outside margins, widow/orphan suppression (3-line limit).
