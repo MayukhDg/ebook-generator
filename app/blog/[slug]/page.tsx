@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { store } from '@/lib/data/store';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { ArrowLeft, Sparkles, Calendar, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Sparkles, Calendar, ArrowRight, Download } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import BlogPostContent from '@/components/blog/BlogPostContent';
 import { ArticleJsonLd } from '@/components/seo/JsonLd';
@@ -134,7 +134,7 @@ export default async function BlogPostPage({
           <p className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto">
             Ingest voice memos, synthesize an 8-chapter blueprint with strict context memory, design crisp vector covers, and export 1-click Amazon KDP trade paperback PDFs.
           </p>
-          <div className="pt-2">
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link
               href="/dashboard"
               className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-6 py-3 text-xs font-bold text-slate-950 hover:bg-amber-400 shadow-lg shadow-amber-500/20 transition-all"
@@ -142,7 +142,25 @@ export default async function BlogPostPage({
               Start Free (20 Credits Included)
               <ArrowRight className="h-4 w-4" />
             </Link>
+            <a
+              href="/Authored%20Once%20Scaled%20Forever%20Digital%20Publishing%20guide.pdf"
+              download="Authored-Once-Scaled-Forever-Digital-Publishing-Guide.pdf"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800/80 px-5 py-3 text-xs font-semibold text-amber-300 hover:bg-slate-800 hover:text-white transition-all shadow-md"
+            >
+              <Download className="h-4 w-4" />
+              Download Free Ebook (PDF)
+            </a>
           </div>
+          <p className="text-xs text-slate-400 pt-1">
+            Want to get started with digital publishing?{' '}
+            <a
+              href="/Authored%20Once%20Scaled%20Forever%20Digital%20Publishing%20guide.pdf"
+              download="Authored-Once-Scaled-Forever-Digital-Publishing-Guide.pdf"
+              className="font-medium text-amber-400 underline underline-offset-2 hover:text-amber-300"
+            >
+              Download the ebook here
+            </a>
+          </p>
         </div>
       </main>
 

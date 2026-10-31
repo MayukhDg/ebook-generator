@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { BookOpen, ShieldCheck, Printer, FileCheck } from 'lucide-react';
+import { BookOpen, ShieldCheck, Printer, FileCheck, Download } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -83,6 +83,16 @@ export default function Footer() {
                 <Link href="/#contact" className="text-gray-500 hover:text-orange-600 transition-colors">
                   Contact Us
                 </Link>
+              </li>
+              <li>
+                <a
+                  href="/Authored%20Once%20Scaled%20Forever%20Digital%20Publishing%20guide.pdf"
+                  download="Authored-Once-Scaled-Forever-Digital-Publishing-Guide.pdf"
+                  className="text-gray-500 hover:text-orange-600 transition-colors inline-flex items-center gap-1.5"
+                >
+                  <Download className="h-3.5 w-3.5 text-orange-500" />
+                  Free Publishing Ebook (PDF)
+                </a>
               </li>
               <li>
                 <Link href="/login" className="text-gray-500 hover:text-orange-600 transition-colors">
