@@ -14,7 +14,8 @@ import {
   LogOut,
   LogIn,
   Menu,
-  X
+  X,
+  Mail,
 } from 'lucide-react';
 import { CREDIT_RATES } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
@@ -75,6 +76,7 @@ export default function Navbar() {
     { label: 'Studio', href: '/dashboard', icon: Layers, requireAuth: true, requireAdmin: false },
     { label: 'My eBooks', href: '/dashboard/books', icon: BookOpen, requireAuth: true, requireAdmin: false },
     { label: 'Blogs', href: '/blog', icon: FileText, requireAuth: false, requireAdmin: false },
+    { label: 'Contact Us', href: '/#contact', icon: Mail, requireAuth: false, requireAdmin: false },
     { label: 'Admin CMS', href: '/admin/blog', icon: ShieldCheck, requireAuth: true, requireAdmin: true },
   ];
 

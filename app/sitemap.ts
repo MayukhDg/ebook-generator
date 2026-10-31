@@ -10,6 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // 1. Core Static Marketing & Documentation Routes
   const staticRoutes: MetadataRoute.Sitemap = [
     {
+
       url: `${baseUrl}`,
       lastModified: currentDate,
       changeFrequency: 'daily',
@@ -52,6 +53,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         'voice-to-book-framework-for-experts',
         'why-chatgpt-fails-at-writing-books',
         'best-ai-ebook-generators-compared',
+        'does-writing-a-book-actually-help-experienced-professionals'
       ];
       blogRoutes = coreSlugs.map((slug) => ({
         url: `${baseUrl}/blog/${slug}`,
@@ -66,6 +68,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       'voice-to-book-framework-for-experts',
       'why-chatgpt-fails-at-writing-books',
       'best-ai-ebook-generators-compared',
+      'does-writing-a-book-actually-help-experienced-professionals'
     ];
     blogRoutes = coreSlugs.map((slug) => ({
       url: `${baseUrl}/blog/${slug}`,

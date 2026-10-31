@@ -15,6 +15,7 @@ import {
 import InteractiveSteps from '@/components/home/InteractiveSteps';
 import PricingSection from '@/components/home/PricingSection';
 import FaqAccordion, { FaqItem } from '@/components/home/FaqAccordion';
+import ContactSection from '@/components/home/ContactSection';
 
 export const metadata = {
   title: 'OpusCraft | The Executive Publishing Studio — Turn Your Expertise Into An Authoritative Book',
@@ -306,6 +307,24 @@ export default async function HomePage() {
 
           {/* Interactive FAQ Accordion Subcomponent */}
           <FaqAccordion faqs={faqs} />
+        </div>
+      </section>
+
+      {/* 6. CONTACT US SECTION */}
+      <section id="contact" className="py-20 px-4 sm:px-6 lg:px-8 border-t border-gray-100 bg-white/60">
+        <div className="mx-auto max-w-4xl space-y-10">
+          <div className="text-center space-y-4">
+            <span className="text-xs font-bold uppercase tracking-widest text-orange-500">
+              Direct Founder & Editorial Access
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900">
+              Contact Us
+            </h2>
+            {/* BLUF Paragraph immediately following H2 */}
+          </div>
+
+          {/* Interactive Contact Subcomponent */}
+          <ContactSection />
         </div>
       </section>
 
